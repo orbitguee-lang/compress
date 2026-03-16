@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Offline — WhatsApp Story HD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: { primary: "#ff6933", "bg-dark": "#23140f" },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Ambient bg */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      pointer-events: none;
+    }
+
+    /* Robot hover scale */
+    .robot-wrap {
+      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .robot-wrap:hover { transform: scale(1.06); }
+
+    /* Refresh icon spin on hover */
+    .refresh-icon {
+      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    button:hover .refresh-icon { transform: rotate(360deg); }
+
+    /* Glow button */
+    .btn-glow {
+      box-shadow: 0 0 20px rgba(255,105,51,0.4), 0 4px 20px rgba(255,105,51,0.25);
+      transition: box-shadow 0.3s, transform 0.2s;
+    }
+    .btn-glow:hover {
+      box-shadow: 0 0 32px rgba(255,105,51,0.6), 0 6px 28px rgba(255,105,51,0.4);
+      transform: translateY(-2px);
+    }
+    .btn-glow:active { transform: scale(0.97); }
+
+    /* Pulse ring around robot */
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0   rgba(255,105,51,0.3); }
+      70%  { box-shadow: 0 0 0 20px rgba(255,105,51,0); }
+      100% { box-shadow: 0 0 0 0   rgba(255,105,51,0); }
+    }
+    .pulse-ring { animation: pulse-ring 3s ease-out infinite; }
+
+    /* Fade-in animations */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .a1 { animation: fade-up 0.6s ease both; }
+    .a2 { animation: fade-up 0.6s 0.1s ease both; }
+    .a3 { animation: fade-up 0.6s 0.2s ease both; }
+    .a4 { animation: fade-up 0.6s 0.3s ease both; }
+    .a5 { animation: fade-up 0.6s 0.4s ease both; }
+
+    /* Page out */
+    @keyframes page-out {
+      to { opacity: 0; transform: translateY(-20px); }
+    }
+    .page-out { animation: page-out 0.35s ease forwards; }
+
+    /* Notification toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: rgba(35,20,15,0.95);
+      border: 1px solid rgba(255,105,51,0.4);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      backdrop-filter: blur(12px);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 100;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body class="bg-[#23140f] text-white min-h-screen overflow-hidden">
+
+  <!-- Ambient -->
+  <div class="absolute inset-0 z-0 pointer-events-none">
+    <div class="orb" style="width:50vw;height:50vw;top:-10%;left:-10%;background:radial-gradient(circle,rgba(255,105,51,0.12) 0%,transparent 70%)"></div>
+    <div class="orb" style="width:40vw;height:40vw;bottom:-10%;right:-5%;background:radial-gradient(circle,rgba(255,105,51,0.15) 0%,transparent 70%)"></div>
+  </div>
+
+  <div id="page" class="relative z-10 flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between px-6 py-5 md:px-12 lg:px-20 border-b border-white/5 a1">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-[#ff6933] flex items-center justify-center shadow-lg">
+          <span class="material-symbols-outlined text-white text-2xl" style="font-variation-settings:'FILL' 1">hd</span>
+        </div>
+        <span class="text-lg font-bold tracking-tight">WhatsApp Story HD</span>
+      </div>
+      <!-- Wifi off badge -->
+      <div class="flex items-center justify-center w-10 h-10 rounded-full bg-[#ff6933]/15 text-[#ff6933] border border-[#ff6933]/20">
+        <span class="material-symbols-outlined text-xl">wifi_off</span>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="flex-1 flex flex-col items-center justify-center px-6 py-12">
+      <div class="flex max-w-md flex-col items-center text-center">
+
+        <!-- Robot illustration -->
+        <div class="mb-10 a2">
+          <div class="relative w-60 h-60 rounded-full bg-[#ff6933]/5 border border-[#ff6933]/10 flex items-center justify-center pulse-ring">
+            <!-- Inner glow ring -->
+            <div class="absolute inset-4 rounded-full bg-[#ff6933]/5 border border-[#ff6933]/10"></div>
+            <!-- Robot image -->
+            <div class="robot-wrap relative z-10 w-44 h-44 rounded-full overflow-hidden bg-center bg-no-repeat bg-contain"
+              style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBfXpA7p28VFJuAtFxn07gJ9jVThEYFBhMN5dXUWeY15az-gkWLnxnYjTU4jXRJg_f-vx4IJPa9gLmKsoqUtFlYKimEvDqhKQB_uk2SiPx1RXzG85MC3BYwNaqhKnzbfMxVMogx9pEektWlly61BUFP6d02XajM_VDBpKq1M-NzV5CpcDUJKjT4yW29G3u3TLmw4583vtlOjrht0QOopDGrrjU2aG0sYsBZSiSTAWS4kKBgn7aMCPiyq8olcCyf-jOYbIAb8HL2WU0');">
+            </div>
+          </div>
+        </div>
+
+        <!-- Headline -->
+        <h1 class="text-3xl md:text-4xl font-extrabold mb-4 a3">
+          Ups! Koneksi Terputus
+        </h1>
+
+        <!-- Description -->
+        <p class="text-base text-white/50 leading-relaxed mb-10 a4">
+          Sepertinya Anda sedang offline. Periksa koneksi internet Anda untuk melanjutkan kompresi media dengan kualitas HD.
+        </p>
+
+        <!-- Retry button -->
+        <button id="retryBtn"
+          class="btn-glow group w-full max-w-xs h-14 bg-[#ff6933] text-white font-bold text-base rounded-2xl flex items-center justify-center gap-3 cursor-pointer a5">
+          <span class="material-symbols-outlined refresh-icon text-xl">refresh</span>
+          Coba Lagi
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast">📡 Masih offline. Periksa Wi-Fi atau data seluler Anda.</div>
+
+  <script>
+    const retryBtn = document.getElementById('retryBtn');
+    const toast = document.getElementById('toast');
+    const page = document.getElementById('page');
+
+    retryBtn.addEventListener('click', () => {
+      retryBtn.disabled = true;
+
+      // Brief loading state
+      retryBtn.innerHTML = `
+        <span class="material-symbols-outlined text-xl animate-spin">sync</span>
+        Memeriksa...
+      `;
+
+      setTimeout(() => {
+        if (navigator.onLine) {
+          // Online — navigate to upload
+          page.classList.add('page-out');
+          setTimeout(() => { window.location.href = 'upload_interface.html'; }, 350);
+        } else {
+          // Still offline — show toast
+          retryBtn.disabled = false;
+          retryBtn.innerHTML = `
+            <span class="material-symbols-outlined refresh-icon text-xl">refresh</span>
+            Coba Lagi
+          `;
+          showToast();
+        }
+      }, 1200);
+    });
+
+    function showToast() {
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+  </script>
+</body>
+</html>

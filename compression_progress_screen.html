@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Mengompresi... — WhatsApp Story HD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: { primary: "#ff6933", "bg-dark": "#23140f" },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Ambient orbs */
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(90px); pointer-events: none;
+    }
+
+    /* Progress ring smooth animation */
+    #progressCircle {
+      transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    /* Ring glow filter */
+    .ring-glow {
+      filter: drop-shadow(0 0 8px rgba(255,105,51,0.6)) drop-shadow(0 0 20px rgba(255,105,51,0.3));
+    }
+
+    /* Percent number counter */
+    #percentText {
+      font-variant-numeric: tabular-nums;
+      transition: color 0.3s ease;
+    }
+
+    /* Bar sizes */
+    #compressedBar {
+      transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Compressed bar glow */
+    .bar-glow {
+      box-shadow: 0 0 12px rgba(255,105,51,0.5), 0 0 4px rgba(255,105,51,0.8);
+    }
+
+    /* Spinning sync icon */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin 0.8s linear infinite; display: inline-block; }
+
+    /* Pulse text */
+    @keyframes pulse-text {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.45; }
+    }
+    .pulse-text { animation: pulse-text 1.8s ease-in-out infinite; }
+
+    /* Fade-up animations */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .a1 { animation: fade-up 0.5s ease both; }
+    .a2 { animation: fade-up 0.5s 0.1s ease both; }
+    .a3 { animation: fade-up 0.5s 0.2s ease both; }
+    .a4 { animation: fade-up 0.5s 0.3s ease both; }
+    .a5 { animation: fade-up 0.5s 0.4s ease both; }
+
+    /* Page transition out */
+    @keyframes page-out {
+      to { opacity: 0; transform: scale(0.97); }
+    }
+    .page-out { animation: page-out 0.35s ease forwards; }
+
+    /* Cancel button */
+    .cancel-btn {
+      border: 1.5px solid rgba(255,105,51,0.25);
+      transition: all 0.2s ease;
+    }
+    .cancel-btn:hover {
+      border-color: rgba(255,105,51,0.6);
+      background: rgba(255,105,51,0.06);
+    }
+    .cancel-btn:active { transform: scale(0.97); }
+
+    /* Success flash for completion */
+    @keyframes success-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255,105,51,0.6); }
+      70% { box-shadow: 0 0 0 24px rgba(255,105,51,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,105,51,0); }
+    }
+    .success-pulse { animation: success-pulse 0.6s ease 3; }
+  </style>
+</head>
+<body class="bg-[#23140f] text-white min-h-screen">
+
+  <!-- Ambient -->
+  <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+    <div class="orb" style="width:50vw;height:50vw;top:-10%;left:-5%;background:radial-gradient(circle,rgba(255,105,51,0.1) 0%,transparent 70%)"></div>
+    <div class="orb" style="width:40vw;height:40vw;bottom:-10%;right:-8%;background:radial-gradient(circle,rgba(255,105,51,0.12) 0%,transparent 70%)"></div>
+  </div>
+
+  <div id="page" class="relative z-10 flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between px-6 py-4 md:px-12 lg:px-20 border-b border-white/5 a1">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-[#ff6933] flex items-center justify-center shadow-lg">
+          <span class="material-symbols-outlined text-white text-2xl" style="font-variation-settings:'FILL' 1">hd</span>
+        </div>
+        <span class="text-lg font-bold tracking-tight">WhatsApp Story HD</span>
+      </div>
+      <!-- Live badge -->
+      <div class="flex items-center gap-2 text-xs font-bold text-[#ff6933] bg-[#ff6933]/10 px-3 py-1.5 rounded-full border border-[#ff6933]/20">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#ff6933] animate-pulse inline-block"></span>
+        COMPRESSING
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="flex-1 flex flex-col items-center justify-center px-6 py-8 max-w-lg mx-auto w-full">
+
+      <!-- Progress Ring -->
+      <div class="relative flex items-center justify-center mb-8 a2">
+        <!-- Outer ambient glow -->
+        <div class="absolute inset-0 rounded-full bg-[#ff6933]/5 blur-3xl scale-150 pointer-events-none"></div>
+
+        <svg class="ring-glow w-60 h-60" viewBox="0 0 256 256">
+          <defs>
+            <!-- Gradient for progress arc -->
+            <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ff6933"/>
+              <stop offset="100%" stop-color="#ffb347"/>
+            </linearGradient>
+          </defs>
+          <!-- Background track -->
+          <circle cx="128" cy="128" r="110"
+            fill="transparent"
+            stroke="rgba(255,105,51,0.1)"
+            stroke-width="10"/>
+          <!-- Progress arc -->
+          <circle id="progressCircle"
+            cx="128" cy="128" r="110"
+            fill="transparent"
+            stroke="url(#arcGrad)"
+            stroke-width="10"
+            stroke-linecap="round"
+            stroke-dasharray="691.15"
+            stroke-dashoffset="691.15"/>
+        </svg>
+
+        <!-- Center content -->
+        <div class="absolute flex flex-col items-center">
+          <span id="percentText" class="text-5xl font-black text-[#ff6933]">0%</span>
+          <span class="text-[10px] font-semibold text-[#ff6933]/60 mt-1 tracking-[0.3em] uppercase">Compressing</span>
+        </div>
+      </div>
+
+      <!-- Status text -->
+      <div class="text-center space-y-2 mb-8 a3">
+        <p id="statusText" class="text-xl font-semibold pulse-text">Memulai kompresi...</p>
+        <div class="flex items-center justify-center gap-2 text-[#ff6933]/70">
+          <span class="material-symbols-outlined text-base">timer</span>
+          <span id="timerText" class="text-sm font-medium tabular-nums">Sisa waktu: 00:15</span>
+        </div>
+      </div>
+
+      <!-- Checklist -->
+      <div class="w-full bg-white/[0.03] rounded-2xl p-5 border border-white/8 mb-8 space-y-3 a4">
+        <!-- Step 1: done from the start -->
+        <div id="step1" class="flex items-center gap-3 opacity-50">
+          <span class="material-symbols-outlined text-green-400 text-lg flex-shrink-0"
+            style="font-variation-settings:'FILL' 1">check_circle</span>
+          <p class="text-sm">Menganalisis frame video...</p>
+        </div>
+        <!-- Step 2: in progress -->
+        <div id="step2" class="flex items-center gap-3">
+          <span id="step2Icon" class="material-symbols-outlined text-[#ff6933] text-lg flex-shrink-0 spin">sync</span>
+          <p id="step2Text" class="text-sm font-medium">Menyesuaikan resolusi HD...</p>
+        </div>
+      </div>
+
+      <!-- Size comparison -->
+      <div class="w-full space-y-4 mb-10 a5">
+        <h3 class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#ff6933]/60">Perbandingan Ukuran</h3>
+
+        <!-- Original bar -->
+        <div>
+          <div class="flex justify-between text-xs font-semibold mb-1.5">
+            <span class="text-white/60">Original</span>
+            <span id="originalSizeLabel" class="text-white/60">— MB</span>
+          </div>
+          <div class="h-3 bg-white/5 rounded-full overflow-hidden">
+            <div class="h-full bg-white/20 rounded-full" style="width:100%"></div>
+          </div>
+        </div>
+
+        <!-- Compressed bar -->
+        <div>
+          <div class="flex justify-between text-xs font-semibold mb-1.5">
+            <span class="text-[#ff6933]">Terkompresi (Estimasi)</span>
+            <span id="compressedSizeLabel" class="text-[#ff6933]">— MB</span>
+          </div>
+          <div class="h-3 bg-[#ff6933]/10 rounded-full overflow-hidden">
+            <div id="compressedBar" class="h-full bg-[#ff6933] rounded-full bar-glow" style="width:0%"></div>
+          </div>
+        </div>
+
+        <!-- Reduction badge -->
+        <div class="flex items-center justify-end">
+          <span id="reductionBadge" class="text-xs font-bold text-[#ff6933] bg-[#ff6933]/10 px-2 py-0.5 rounded-full">
+            —% dihemat
+          </span>
+        </div>
+      </div>
+
+      <!-- Cancel button -->
+      <button id="cancelBtn"
+        class="cancel-btn w-full py-4 rounded-2xl text-[#ff6933] font-bold flex items-center justify-center gap-2 cursor-pointer">
+        <span class="material-symbols-outlined">close</span>
+        Batalkan
+      </button>
+    </main>
+
+    <footer class="py-6 text-center">
+      <p class="text-[10px] text-white/20 uppercase tracking-[0.2em]">Powered by HDRender Engine v2.4</p>
+    </footer>
+  </div>
+
+  <script>
+    // ─── Load session data ────────────────────────────────────────────────────
+    const raw = sessionStorage.getItem('videoData');
+    const data = raw ? JSON.parse(raw) : {
+      // Fallback demo data if accessed directly
+      fileName:       'demo_video.mp4',
+      sizeMB:         48.5,
+      quality:        '1080p',
+      autoSend:       true,
+      compressedMB:   12.1,
+      reductionPct:   75,
+      duration:       28,
+      width:          1080,
+      height:         1920,
+      previewSrc:     '',
+    };
+
+    // ─── Populate UI ──────────────────────────────────────────────────────────
+    const originalSizeLabel   = document.getElementById('originalSizeLabel');
+    const compressedSizeLabel = document.getElementById('compressedSizeLabel');
+    const reductionBadge      = document.getElementById('reductionBadge');
+    const compressedBar       = document.getElementById('compressedBar');
+
+    originalSizeLabel.textContent   = formatMB(data.sizeMB);
+    compressedSizeLabel.textContent = formatMB(data.compressedMB);
+    reductionBadge.textContent      = `${data.reductionPct}% dihemat`;
+
+    // The compressed bar width relative to original = compressedMB / sizeMB * 100
+    const compressedPct = Math.min(100, (data.compressedMB / data.sizeMB) * 100);
+
+    // ─── Progress Simulation ──────────────────────────────────────────────────
+    const TOTAL_DURATION_MS = 15000;  // 15 seconds total
+    const CIRCUMFERENCE     = 691.15; // 2 * π * 110
+
+    const progressCircle = document.getElementById('progressCircle');
+    const percentText    = document.getElementById('percentText');
+    const statusText     = document.getElementById('statusText');
+    const timerText      = document.getElementById('timerText');
+    const step2Icon      = document.getElementById('step2Icon');
+    const step2Text      = document.getElementById('step2Text');
+    const step2          = document.getElementById('step2');
+    const step1          = document.getElementById('step1');
+
+    // Status messages shown at different percentages
+    const statusMessages = [
+      { at: 0,  msg: 'Memulai kompresi...' },
+      { at: 15, msg: 'Menganalisis struktur frame...' },
+      { at: 30, msg: 'Mengoptimalkan bitrate...' },
+      { at: 50, msg: 'Menerapkan kompresi AI...' },
+      { at: 70, msg: 'Menyesuaikan resolusi HD...' },
+      { at: 85, msg: 'Merapikan artefak video...' },
+      { at: 95, msg: 'Finalisasi output...' },
+      { at: 100, msg: '✓ Kompresi selesai!' },
+    ];
+
+    let startTime = null;
+    let animFrame = null;
+    let cancelled = false;
+
+    function getStatusMsg(pct) {
+      let msg = statusMessages[0].msg;
+      for (const s of statusMessages) {
+        if (pct >= s.at) msg = s.msg;
+      }
+      return msg;
+    }
+
+    function formatSecs(s) {
+      const m = Math.floor(s / 60).toString().padStart(2, '0');
+      const ss = Math.floor(s % 60).toString().padStart(2, '0');
+      return `${m}:${ss}`;
+    }
+
+    function tick(timestamp) {
+      if (cancelled) return;
+      if (!startTime) startTime = timestamp;
+
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / TOTAL_DURATION_MS, 1);
+      // Ease-in-out cubic for smoother feel
+      const eased = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+      const pct = Math.floor(eased * 100);
+      const remaining = Math.max(0, Math.ceil((1 - progress) * (TOTAL_DURATION_MS / 1000)));
+
+      // Update ring: dashoffset = CIRCUMFERENCE * (1 - pct/100)
+      progressCircle.style.strokeDashoffset = CIRCUMFERENCE * (1 - eased);
+
+      // Update percentage text
+      percentText.textContent = pct + '%';
+
+      // Update timer
+      timerText.textContent = `Sisa waktu: ${formatSecs(remaining)}`;
+
+      // Update status message
+      statusText.textContent = getStatusMsg(pct);
+
+      // Update compressed bar (animates from 0 → compressedPct over full duration)
+      compressedBar.style.width = (eased * compressedPct) + '%';
+
+      // Step 2 transitions to done at 85%
+      if (pct >= 85 && step2Icon.classList.contains('spin')) {
+        step2Icon.classList.remove('spin');
+        step2Icon.style.fontVariationSettings = "'FILL' 1";
+        step2Icon.textContent = 'check_circle';
+        step2Icon.className = 'material-symbols-outlined text-green-400 text-lg flex-shrink-0';
+        step2.classList.add('opacity-50');
+      }
+
+      if (progress < 1) {
+        animFrame = requestAnimationFrame(tick);
+      } else {
+        // ─── DONE ─────────────────────────────────────────────────────────
+        percentText.textContent = '100%';
+        timerText.textContent   = 'Sisa waktu: 00:00';
+        statusText.textContent  = '✓ Kompresi selesai!';
+        statusText.classList.remove('pulse-text');
+        statusText.style.color  = '#4ade80';  // green
+
+        // Save result data
+        const result = {
+          ...data,
+          // Mark as done
+          done: true,
+        };
+        sessionStorage.setItem('videoData', JSON.stringify(result));
+
+        // Navigate to success after brief pause
+        setTimeout(() => {
+          document.getElementById('page').classList.add('page-out');
+          setTimeout(() => { window.location.href = 'success_ready_screen.html'; }, 350);
+        }, 1200);
+      }
+    }
+
+    // Start animation
+    animFrame = requestAnimationFrame(tick);
+
+    // ─── Cancel ───────────────────────────────────────────────────────────────
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      cancelled = true;
+      if (animFrame) cancelAnimationFrame(animFrame);
+      document.getElementById('page').classList.add('page-out');
+      setTimeout(() => { window.location.href = 'upload_interface.html'; }, 350);
+    });
+
+    // ─── Helper ───────────────────────────────────────────────────────────────
+    function formatMB(mb) {
+      if (!mb) return '— MB';
+      if (mb >= 1024) return `${(mb/1024).toFixed(1)} GB`;
+      return `${mb.toFixed(1)} MB`;
+    }
+  </script>
+</body>
+</html>

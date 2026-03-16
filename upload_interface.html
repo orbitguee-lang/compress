@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Upload — WhatsApp Story HD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: { primary: "#ff6933", "bg-dark": "#23140f" },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Ambient bg */
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(100px); pointer-events: none;
+    }
+
+    /* Dashed SVG border upload zone */
+    .drop-zone {
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='%23ff6933' stroke-width='2.5' stroke-dasharray='10%2c 10' stroke-dashoffset='0' stroke-linecap='round'/%3e%3c/svg%3e");
+      border-radius: 16px;
+      transition: background-color 0.2s, transform 0.2s;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      background-color: rgba(255,105,51,0.08);
+    }
+    .drop-zone.drag-over {
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='%23ff6933' stroke-width='3.5' stroke-dasharray='10%2c 10' stroke-dashoffset='0' stroke-linecap='round'/%3e%3c/svg%3e");
+      transform: scale(1.01);
+    }
+
+    /* Quality card active */
+    .quality-card { transition: all 0.25s ease; cursor: pointer; }
+    .quality-card.active { border-color: #ff6933 !important; background-color: rgba(255,105,51,0.1); }
+    .quality-card:not(.active):hover { border-color: rgba(255,105,51,0.4); }
+
+    /* Toggle switch */
+    .toggle-track {
+      width: 48px; height: 26px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      transition: background 0.3s;
+      position: relative;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .toggle-track.on { background: #ff6933; border-color: #ff6933; }
+    .toggle-thumb {
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: white;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .toggle-track.on .toggle-thumb { transform: translateX(22px); }
+
+    /* Compress button */
+    .compress-btn {
+      background: linear-gradient(135deg, #ff6933 0%, #ff9248 100%);
+      box-shadow: 0 4px 24px rgba(255,105,51,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+      transition: all 0.2s ease;
+    }
+    .compress-btn:hover {
+      box-shadow: 0 6px 32px rgba(255,105,51,0.6), inset 0 1px 0 rgba(255,255,255,0.2);
+      transform: translateY(-2px) scale(1.01);
+    }
+    .compress-btn:active { transform: scale(0.97); }
+
+    /* Pick file btn */
+    .pick-btn {
+      background: #ff6933;
+      box-shadow: 0 4px 16px rgba(255,105,51,0.35);
+      transition: all 0.2s ease;
+    }
+    .pick-btn:hover {
+      background: #ff8048;
+      box-shadow: 0 6px 22px rgba(255,105,51,0.5);
+      transform: scale(1.04);
+    }
+    .pick-btn:active { transform: scale(0.97); }
+
+    /* Error / success toast */
+    #errorToast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: rgba(35,20,15,0.95);
+      border: 1px solid rgba(255,80,80,0.5);
+      color: #ff8080;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      backdrop-filter: blur(16px);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 100;
+      white-space: nowrap;
+      max-width: 90vw;
+      text-align: center;
+    }
+    #errorToast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Fade-up animation */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .a1 { animation: fade-up 0.5s ease both; }
+    .a2 { animation: fade-up 0.5s 0.1s ease both; }
+    .a3 { animation: fade-up 0.5s 0.2s ease both; }
+
+    /* Page out */
+    @keyframes page-out {
+      to { opacity: 0; transform: translateY(-16px); }
+    }
+    .page-out { animation: page-out 0.3s ease forwards; }
+
+    /* File info row */
+    .info-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: rgba(255,255,255,0.5);
+    }
+    .info-row .material-symbols-outlined { font-size: 16px; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,105,51,0.3); border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-[#23140f] text-white min-h-screen">
+
+  <!-- Ambient orbs -->
+  <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+    <div class="orb" style="width:45vw;height:45vw;top:-5%;left:-8%;background:radial-gradient(circle,rgba(255,105,51,0.12) 0%,transparent 70%)"></div>
+    <div class="orb" style="width:35vw;height:35vw;bottom:-10%;right:-5%;background:radial-gradient(circle,rgba(255,105,51,0.1) 0%,transparent 70%)"></div>
+  </div>
+
+  <div id="page" class="relative z-10 flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between px-6 py-4 md:px-12 lg:px-20 border-b border-white/5 sticky top-0 z-40 bg-[#23140f]/80 backdrop-blur-md a1">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-[#ff6933] flex items-center justify-center shadow-lg">
+          <span class="material-symbols-outlined text-white text-2xl" style="font-variation-settings:'FILL' 1">hd</span>
+        </div>
+        <span class="text-lg font-bold tracking-tight">WhatsApp Story HD</span>
+      </div>
+      <div class="hidden md:flex items-center gap-3">
+        <span class="text-xs text-white/40 font-semibold">Premium User</span>
+        <span class="text-xs text-[#ff6933] font-bold bg-[#ff6933]/10 px-2 py-1 rounded-full">Pro Active</span>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="flex-1 px-6 py-8 md:px-12 lg:px-20 max-w-6xl mx-auto w-full">
+
+      <!-- Grid: left (upload) + right (config) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 a2">
+
+        <!-- ===== LEFT COLUMN ===== -->
+        <div class="lg:col-span-7 flex flex-col gap-6">
+
+          <!-- Drop Zone -->
+          <div id="dropZone" class="drop-zone relative bg-[#ff6933]/[0.03] flex flex-col items-center justify-center p-10 min-h-[380px] cursor-pointer">
+            <!-- Radial gradient overlay -->
+            <div class="absolute inset-0 pointer-events-none rounded-2xl"
+              style="background: radial-gradient(circle at center, rgba(255,105,51,0.06) 0%, transparent 70%)"></div>
+
+            <div class="relative flex flex-col items-center gap-5 text-center z-10">
+              <!-- Upload icon with glow -->
+              <div class="relative">
+                <div class="absolute -inset-5 bg-[#ff6933]/25 blur-2xl rounded-full"></div>
+                <div class="relative bg-gradient-to-br from-[#ff6933] to-[#ff9248] p-5 rounded-full shadow-xl">
+                  <span class="material-symbols-outlined text-white text-5xl" style="font-variation-settings:'FILL' 1">cloud_upload</span>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-2xl font-bold mb-2">Upload Video Story</h3>
+                <p class="text-white/40 text-sm max-w-xs">Tarik dan lepas video di sini atau klik untuk memilih file</p>
+              </div>
+
+              <button id="pickBtn" class="pick-btn text-white font-bold px-8 py-3 rounded-xl cursor-pointer">
+                Pilih Video
+              </button>
+            </div>
+
+            <!-- Hidden file input -->
+            <input id="fileInput" type="file" accept="video/mp4,video/quicktime,video/x-msvideo,.mp4,.mov,.avi"
+              class="hidden"/>
+          </div>
+
+          <!-- Warning panel -->
+          <div class="bg-[#ff6933]/10 border border-[#ff6933]/30 rounded-2xl p-5 flex items-start gap-4">
+            <span class="material-symbols-outlined text-[#ff6933] text-3xl flex-shrink-0 mt-0.5"
+              style="font-variation-settings:'FILL' 1">warning</span>
+            <div class="space-y-1">
+              <p class="text-[#ff6933] font-bold text-sm leading-tight">
+                Batas Ukuran File: <span class="font-extrabold">Minimum 13 MB — Maksimum 550 MB</span>
+              </p>
+              <p class="text-[#ff6933]/70 font-medium text-xs">
+                Batas Durasi Video: Minimum 5 Detik — Maksimum 1 Menit
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== RIGHT COLUMN ===== -->
+        <div class="lg:col-span-5 flex flex-col gap-5 a3">
+
+          <!-- Preview Card -->
+          <div class="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden">
+            <!-- Thumbnail area -->
+            <div id="previewArea" class="relative aspect-video bg-[#1a0d09] flex items-center justify-center overflow-hidden">
+              <img id="previewImg"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9QXVhQPlmlkfinfvWEA3ZA0_jpxHJlJwkEAMc_jtkA5LXSux7_C2dmrKDMzXxoPkylN2R-2UNq_EkMkOcM7v_ADgJjeKzfgQK1GUq07PTEWRuo2rjclNZrCB9QyquDtKAwgf7F9LS4y_wGGPatj9Irw9S5O892uosQB4FTXZftlcBAmROrmxa-fOdOESipqyY6VfgE6pA3Rl7IB5z477QXjZzyIKUF_WUTdrx4knYqS0Wt-DqPbYoRZ1zgxVfpw9sGZ1O_VmAM8k"
+                class="w-full h-full object-cover" alt="Preview"/>
+              <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <span class="material-symbols-outlined text-white text-5xl opacity-80"
+                  style="font-variation-settings:'FILL' 1">play_circle</span>
+              </div>
+              <div class="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] text-white font-bold tracking-widest uppercase">Preview</div>
+            </div>
+
+            <!-- File info -->
+            <div class="p-4 space-y-3">
+              <div class="flex justify-between items-start gap-2">
+                <h4 id="fileName" class="font-bold truncate max-w-[200px] text-sm">cinematic_travel_vlog.mp4</h4>
+                <span class="text-[#ff6933] text-[10px] font-bold px-2 py-1 bg-[#ff6933]/10 rounded-full flex-shrink-0">Source</span>
+              </div>
+              <div class="grid grid-cols-2 gap-y-2">
+                <div class="info-row"><span class="material-symbols-outlined">attachment</span><span id="fileSize">45.8 MB</span></div>
+                <div class="info-row"><span class="material-symbols-outlined">schedule</span><span id="fileDuration">00:28</span></div>
+                <div class="info-row"><span class="material-symbols-outlined">aspect_ratio</span><span id="fileRes">1080 × 1920</span></div>
+                <div class="info-row"><span class="material-symbols-outlined">high_quality</span><span id="fileCodec">H.264</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quality Selection -->
+          <div class="space-y-3">
+            <h3 class="font-bold flex items-center gap-2 text-sm">
+              <span class="material-symbols-outlined text-[#ff6933] text-xl">tune</span>
+              Pilih Kualitas Output
+            </h3>
+
+            <!-- 1080p card (active by default) -->
+            <div id="card1080" class="quality-card active relative border-2 border-[#ff6933] bg-[#ff6933]/10 rounded-2xl p-4 flex items-center justify-between">
+              <span class="absolute -right-2 -top-2 bg-[#ff6933] text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-lg tracking-wide z-10">RECOMMENDED</span>
+              <div class="flex items-center gap-3">
+                <div class="bg-[#ff6933] p-2 rounded-lg text-white">
+                  <span class="material-symbols-outlined text-xl" style="font-variation-settings:'FILL' 1">hd</span>
+                </div>
+                <div>
+                  <p class="font-bold text-sm">1080p 60fps Ultra HD</p>
+                  <p class="text-white/40 text-xs">Best for Instagram & WhatsApp HD Story</p>
+                </div>
+              </div>
+              <span id="check1080" class="material-symbols-outlined text-[#ff6933] text-2xl" style="font-variation-settings:'FILL' 1">check_circle</span>
+            </div>
+
+            <!-- 720p card -->
+            <div id="card720" class="quality-card border border-white/10 bg-white/[0.02] rounded-2xl p-4 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="bg-white/10 p-2 rounded-lg text-white/50">
+                  <span class="material-symbols-outlined text-xl">high_quality</span>
+                </div>
+                <div>
+                  <p class="font-bold text-sm">720p 60fps HD</p>
+                  <p class="text-white/40 text-xs">Faster compression, standard HD</p>
+                </div>
+              </div>
+              <div id="check720" class="w-6 h-6 border-2 border-white/20 rounded-full flex-shrink-0"></div>
+            </div>
+          </div>
+
+          <!-- Toggle -->
+          <div class="bg-white/[0.03] border border-white/8 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <p class="font-bold text-sm">Langsung Kirim ke Chat WhatsApp</p>
+              <p class="text-white/40 text-xs mt-0.5">Buka WhatsApp otomatis setelah selesai</p>
+            </div>
+            <div id="toggleTrack" class="toggle-track on">
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+
+          <!-- Compress button -->
+          <button id="compressBtn"
+            class="compress-btn w-full py-5 rounded-2xl text-white font-extrabold text-lg flex items-center justify-center gap-3 cursor-pointer">
+            <span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 1">auto_fix_high</span>
+            Kompres Sekarang
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer stats -->
+      <div class="flex flex-wrap justify-center gap-10 md:gap-16 py-8 mt-8 border-t border-white/5 opacity-40">
+        <div class="flex flex-col items-center">
+          <span class="text-2xl font-extrabold">4.8M+</span>
+          <span class="text-xs uppercase tracking-widest text-white/60 mt-0.5">Videos Processed</span>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="text-2xl font-extrabold">1080p</span>
+          <span class="text-xs uppercase tracking-widest text-white/60 mt-0.5">Max Resolution</span>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="text-2xl font-extrabold">0.02s</span>
+          <span class="text-xs uppercase tracking-widest text-white/60 mt-0.5">Avg Latency</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Error toast -->
+  <div id="errorToast">⚠️ Error message</div>
+
+  <!-- Hidden video for metadata extraction -->
+  <video id="hiddenVideo" class="hidden" preload="metadata"></video>
+
+  <script>
+    // ─── State ────────────────────────────────────────────────────────────────
+    let selectedFile = null;
+    let selectedQuality = '1080p';   // default
+    let autoSend = true;             // toggle default: on
+    let fileObjectURL = null;
+
+    // ─── Elements ─────────────────────────────────────────────────────────────
+    const dropZone     = document.getElementById('dropZone');
+    const fileInput    = document.getElementById('fileInput');
+    const pickBtn      = document.getElementById('pickBtn');
+    const compressBtn  = document.getElementById('compressBtn');
+    const hiddenVideo  = document.getElementById('hiddenVideo');
+    const toggleTrack  = document.getElementById('toggleTrack');
+    const card1080     = document.getElementById('card1080');
+    const card720      = document.getElementById('card720');
+    const check1080    = document.getElementById('check1080');
+    const check720     = document.getElementById('check720');
+    const errorToast   = document.getElementById('errorToast');
+
+    // ─── Drop Zone Events ─────────────────────────────────────────────────────
+    pickBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      fileInput.click();
+    });
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // Drag events
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drag-over');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) processFile(file);
+    });
+
+    // File input change
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) processFile(fileInput.files[0]);
+    });
+
+    // ─── File Processing ──────────────────────────────────────────────────────
+    function processFile(file) {
+      // Type check — accept video/* or specific extensions
+      const validTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/avi'];
+      const isVideo = file.type.startsWith('video/') || validTypes.includes(file.type);
+
+      if (!isVideo) {
+        showError('❌ File harus berupa video (MP4, MOV, AVI)');
+        return;
+      }
+
+      const sizeMB = file.size / (1024 * 1024);
+      if (sizeMB < 13) {
+        showError(`❌ Ukuran file terlalu kecil (${sizeMB.toFixed(1)} MB). Minimum 13 MB.`);
+        return;
+      }
+      if (sizeMB > 550) {
+        showError(`❌ Ukuran file terlalu besar (${sizeMB.toFixed(1)} MB). Maksimum 550 MB.`);
+        return;
+      }
+
+      // Revoke old object URL to prevent memory leak
+      if (fileObjectURL) URL.revokeObjectURL(fileObjectURL);
+      fileObjectURL = URL.createObjectURL(file);
+
+      // Load metadata via hidden video element
+      hiddenVideo.src = fileObjectURL;
+      hiddenVideo.load();
+
+      hiddenVideo.addEventListener('loadedmetadata', function onMeta() {
+        hiddenVideo.removeEventListener('loadedmetadata', onMeta);
+
+        const duration = hiddenVideo.duration;  // seconds
+        const vw = hiddenVideo.videoWidth;
+        const vh = hiddenVideo.videoHeight;
+
+        // Validate duration
+        if (duration < 5) {
+          showError(`❌ Durasi terlalu pendek (${duration.toFixed(1)}s). Minimum 5 detik.`);
+          return;
+        }
+        if (duration > 60) {
+          showError(`❌ Durasi terlalu panjang (${duration.toFixed(0)}s). Maksimum 60 detik.`);
+          return;
+        }
+
+        selectedFile = file;
+        updatePreview(file, sizeMB, duration, vw, vh);
+      }, { once: true });
+    }
+
+    // ─── Update Preview Panel ─────────────────────────────────────────────────
+    function updatePreview(file, sizeMB, duration, vw, vh) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      const codecMap = { 'mp4': 'H.264', 'mov': 'ProRes/H.264', 'avi': 'AVI/DivX' };
+      const codec = codecMap[ext] || 'Video';
+
+      // Thumbnail from video
+      const previewImg = document.getElementById('previewImg');
+
+      // Try to capture a frame as thumbnail
+      const canvas = document.createElement('canvas');
+      canvas.width = vw || 640;
+      canvas.height = vh || 360;
+      const seekTime = Math.min(1, duration * 0.1);
+
+      hiddenVideo.currentTime = seekTime;
+      hiddenVideo.addEventListener('seeked', function onSeeked() {
+        hiddenVideo.removeEventListener('seeked', onSeeked);
+        try {
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
+          previewImg.src = canvas.toDataURL('image/jpeg', 0.85);
+        } catch (e) {
+          // Cross-origin or permission error — keep default thumbnail
+        }
+      }, { once: true });
+
+      // Update text info
+      document.getElementById('fileName').textContent = truncate(file.name, 28);
+      document.getElementById('fileSize').textContent = formatMB(sizeMB);
+      document.getElementById('fileDuration').textContent = formatDuration(duration);
+      document.getElementById('fileRes').textContent = (vw && vh) ? `${vw} × ${vh}` : 'Auto';
+      document.getElementById('fileCodec').textContent = codec;
+    }
+
+    // ─── Quality Selection ─────────────────────────────────────────────────────
+    card1080.addEventListener('click', () => selectQuality('1080p'));
+    card720.addEventListener('click',  () => selectQuality('720p'));
+
+    function selectQuality(q) {
+      selectedQuality = q;
+      if (q === '1080p') {
+        card1080.classList.add('active');
+        card720.classList.remove('active');
+        check1080.outerHTML = `<span id="check1080" class="material-symbols-outlined text-[#ff6933] text-2xl" style="font-variation-settings:'FILL' 1">check_circle</span>`;
+        document.getElementById('check720').outerHTML = `<div id="check720" class="w-6 h-6 border-2 border-white/20 rounded-full flex-shrink-0"></div>`;
+      } else {
+        card720.classList.add('active');
+        card1080.classList.remove('active');
+        document.getElementById('check720').outerHTML = `<span id="check720" class="material-symbols-outlined text-[#ff6933] text-2xl" style="font-variation-settings:'FILL' 1">check_circle</span>`;
+        document.getElementById('check1080').outerHTML = `<div id="check1080" class="w-6 h-6 border-2 border-white/20 rounded-full flex-shrink-0"></div>`;
+      }
+    }
+
+    // ─── Toggle ──────────────────────────────────────────────────────────────
+    toggleTrack.addEventListener('click', () => {
+      autoSend = !autoSend;
+      toggleTrack.classList.toggle('on', autoSend);
+    });
+
+    // ─── Compress Button ──────────────────────────────────────────────────────
+    compressBtn.addEventListener('click', () => {
+      if (!selectedFile) {
+        showError('⚠️ Pilih video terlebih dahulu sebelum kompres!');
+        return;
+      }
+
+      // Save all relevant data to sessionStorage
+      const sizeMB = selectedFile.size / (1024 * 1024);
+      const data = {
+        fileName:   selectedFile.name,
+        sizeMB:     sizeMB,
+        quality:    selectedQuality,
+        autoSend:   autoSend,
+        // Compressed size estimate
+        compressedMB: selectedQuality === '1080p' ? sizeMB * 0.25 : sizeMB * 0.15,
+        reductionPct: selectedQuality === '1080p' ? 75 : 85,
+        duration:   parseFloat(hiddenVideo.duration || 0),
+        width:      hiddenVideo.videoWidth  || 1080,
+        height:     hiddenVideo.videoHeight || 1920,
+        previewSrc: document.getElementById('previewImg').src,
+      };
+      sessionStorage.setItem('videoData', JSON.stringify(data));
+
+      // Animate out
+      document.getElementById('page').classList.add('page-out');
+      setTimeout(() => { window.location.href = 'compression_progress_screen.html'; }, 300);
+    });
+
+    // ─── Helpers ─────────────────────────────────────────────────────────────
+    function showError(msg) {
+      errorToast.textContent = msg;
+      errorToast.classList.add('show');
+      setTimeout(() => errorToast.classList.remove('show'), 4000);
+    }
+
+    function formatMB(mb) {
+      if (mb >= 1024) return `${(mb/1024).toFixed(1)} GB`;
+      return `${mb.toFixed(1)} MB`;
+    }
+
+    function formatDuration(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = Math.floor(sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function truncate(str, maxLen) {
+      if (str.length <= maxLen) return str;
+      const ext = str.split('.').pop();
+      return str.substring(0, maxLen - ext.length - 4) + '...' + ext;
+    }
+  </script>
+</body>
+</html>

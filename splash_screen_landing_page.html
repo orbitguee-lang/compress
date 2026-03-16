@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>WhatsApp Story HD — Kompresi Cerdas</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#ff6933",
+            "primary-hover": "#ff8559",
+            "bg-dark": "#23140f",
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Animated ambient orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      animation: orb-drift 8s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 45vw; height: 45vw;
+      top: -10%; left: -8%;
+      background: radial-gradient(circle, rgba(255,105,51,0.18) 0%, transparent 70%);
+      animation-delay: 0s;
+    }
+    .orb-2 {
+      width: 55vw; height: 55vw;
+      bottom: -15%; right: -10%;
+      background: radial-gradient(circle, rgba(255,105,51,0.28) 0%, transparent 70%);
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 30vw; height: 30vw;
+      top: 40%; left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(circle, rgba(255,140,80,0.08) 0%, transparent 70%);
+      animation-delay: -2s;
+    }
+    @keyframes orb-drift {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(2%, 3%) scale(1.04); }
+      66% { transform: translate(-2%, -2%) scale(0.97); }
+    }
+
+    /* Particle overlay */
+    .particle-bg {
+      background-image:
+        radial-gradient(circle at 20% 80%, rgba(255,105,51,0.06) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255,160,80,0.05) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(255,105,51,0.03) 0%, transparent 80%);
+    }
+
+    /* Glow effects */
+    .btn-glow {
+      box-shadow: 0 0 20px rgba(255,105,51,0.45), 0 4px 24px rgba(255,105,51,0.3);
+      transition: box-shadow 0.3s ease, transform 0.2s ease;
+    }
+    .btn-glow:hover {
+      box-shadow: 0 0 35px rgba(255,105,51,0.7), 0 8px 32px rgba(255,105,51,0.5);
+      transform: translateY(-2px);
+    }
+    .btn-glow:active { transform: scale(0.97); }
+
+    /* Icon box glow */
+    .icon-box {
+      box-shadow:
+        0 0 60px rgba(255,105,51,0.35),
+        0 20px 60px rgba(255,105,51,0.2),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .icon-glow {
+      position: absolute;
+      inset: -30px;
+      background: radial-gradient(circle, rgba(255,105,51,0.3) 0%, transparent 70%);
+      filter: blur(20px);
+      border-radius: 50%;
+    }
+
+    /* Arrow bounce animation */
+    .arrow-icon { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    button:hover .arrow-icon { transform: translateX(6px); }
+
+    /* Spinning loader dot */
+    @keyframes spin-slow { to { transform: rotate(360deg); } }
+    .spin-slow { animation: spin-slow 2s linear infinite; }
+
+    /* Page entrance animations */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .anim-1 { animation: fade-up 0.7s ease forwards; }
+    .anim-2 { animation: fade-up 0.7s 0.15s ease both; }
+    .anim-3 { animation: fade-up 0.7s 0.3s ease both; }
+    .anim-4 { animation: fade-up 0.7s 0.45s ease both; }
+    .anim-5 { animation: fade-up 0.7s 0.6s ease both; }
+
+    /* Page transition */
+    @keyframes page-out {
+      from { opacity: 1; transform: scale(1); }
+      to   { opacity: 0; transform: scale(1.04); }
+    }
+    .page-out { animation: page-out 0.4s ease forwards; }
+
+    /* Footer gradient bar */
+    .footer-bar {
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(255,105,51,0.7), transparent);
+    }
+
+    /* Logo gradient text */
+    .logo-gradient {
+      background: linear-gradient(135deg, #ff6933 0%, #ffb347 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Grid noise texture overlay */
+    .noise::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      opacity: 0.3;
+    }
+  </style>
+</head>
+<body class="bg-[#23140f] text-white min-h-screen overflow-hidden noise">
+
+  <!-- Ambient background -->
+  <div class="absolute inset-0 z-0 particle-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Main layout -->
+  <div id="page" class="relative z-10 flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between px-6 py-5 md:px-12 lg:px-20 anim-1">
+      <div class="flex items-center gap-3">
+        <!-- Logo box -->
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-[#ff6933] flex items-center justify-center shadow-lg">
+          <span class="material-symbols-outlined text-white text-2xl" style="font-variation-settings:'FILL' 1">hd</span>
+        </div>
+        <span class="text-lg font-bold tracking-tight text-white">WhatsApp Story HD</span>
+      </div>
+      <div class="hidden md:flex items-center gap-2 text-sm text-white/40 font-medium">
+        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block"></span>
+        Mesin Aktif
+      </div>
+    </header>
+
+    <!-- Hero content -->
+    <main class="flex-1 flex flex-col items-center justify-center px-6 text-center pb-8 max-w-3xl mx-auto w-full">
+
+      <!-- Icon showcase -->
+      <div class="relative mb-10 anim-2">
+        <div class="icon-glow"></div>
+        <div class="relative w-36 h-36 md:w-48 md:h-48 rounded-3xl icon-box bg-gradient-to-tr from-[#ff6933]/80 via-[#ff9248]/60 to-amber-500/50 flex items-center justify-center border border-white/10">
+          <div class="w-full h-full rounded-3xl bg-[#23140f]/60 backdrop-blur-sm flex items-center justify-center">
+            <span class="material-symbols-outlined text-7xl md:text-8xl"
+              style="font-variation-settings:'FILL' 1; background: linear-gradient(135deg, #ffb347, #ff6933); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+              photo_library
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Headline -->
+      <h1 class="text-4xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight mb-5 anim-3">
+        Kompresi Cerdas,<br/>
+        <span class="text-[#ff6933]">Kualitas Maksimal</span>
+      </h1>
+
+      <!-- Subheadline -->
+      <p class="text-base md:text-lg text-white/50 max-w-xl mb-12 font-medium leading-relaxed anim-4">
+        Optimalkan status WhatsApp Anda tanpa kehilangan detail.<br class="hidden md:block"/>
+        Teknologi AI terbaru untuk video dan foto jernih.
+      </p>
+
+      <!-- CTA Button -->
+      <div class="anim-5 w-full max-w-xs">
+        <button id="startBtn"
+          class="btn-glow w-full h-16 bg-[#ff6933] text-white font-bold text-lg rounded-2xl flex items-center justify-center gap-3 cursor-pointer select-none">
+          Mulai Sekarang
+          <span class="material-symbols-outlined arrow-icon text-2xl">arrow_forward</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="pb-8 flex flex-col items-center gap-4">
+      <div class="flex items-center gap-3 text-white/40">
+        <!-- Spinning ring indicator -->
+        <svg class="spin-slow w-4 h-4" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="rgba(255,105,51,0.3)" stroke-width="2"/>
+          <path d="M12 2 A10 10 0 0 1 22 12" stroke="#ff6933" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <p class="text-xs font-semibold tracking-[0.25em] uppercase text-[#ff6933]/60">Menyiapkan Mesin Kompresi</p>
+      </div>
+      <div class="footer-bar w-48 rounded-full"></div>
+    </footer>
+  </div>
+
+  <!-- Hidden asset (requirement) -->
+  <div class="hidden">
+    <img data-alt="Abstract orange and amber geometric particles background with glowing neon lines"
+      src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrVTaRGczS8fp0lRef5Lmw42geCn95WJ2cGcn-QSP7OlkB4xDzDXrWRbQlszjlEo9wqxvLsuTyNK7r1mNX86XCqep_NINU_DQGqTTrUolLmBZkSUcD0RCtU6IwZ50iDY5eZVoBuAFZjAdajwwUBz2vnmOS-5No9q-Wv-3d8IW7TmNHoqdp8JUlflbaoOTNKuur-sxdZYnIszAkr65ARamX_xHCUrF9YzF_rQHATfJaLGi6MEPnkn1mM1RS9GVsk5nbHGFF0-mP4wc"/>
+  </div>
+
+  <script>
+    const btn = document.getElementById('startBtn');
+    const page = document.getElementById('page');
+
+    btn.addEventListener('click', () => {
+      // Disable button to prevent double-click
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+
+      // Animate out
+      page.classList.add('page-out');
+
+      setTimeout(() => {
+        if (navigator.onLine) {
+          window.location.href = 'upload_interface.html';
+        } else {
+          window.location.href = 'offline_state_screen.html';
+        }
+      }, 380);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Berhasil! — WhatsApp Story HD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: { primary: "#ff6933", "bg-dark": "#23140f" },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Ambient orbs */
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(100px); pointer-events: none;
+    }
+
+    /* Success circle pulse */
+    @keyframes success-glow {
+      0%, 100% { box-shadow: 0 0 30px rgba(255,105,51,0.5), 0 0 60px rgba(255,105,51,0.2); }
+      50%       { box-shadow: 0 0 50px rgba(255,105,51,0.8), 0 0 80px rgba(255,105,51,0.4); }
+    }
+    .success-glow {
+      animation: success-glow 2.5s ease-in-out infinite;
+    }
+
+    /* Check icon pop */
+    @keyframes check-pop {
+      0%   { transform: scale(0) rotate(-30deg); opacity: 0; }
+      60%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .check-pop { animation: check-pop 0.6s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+    /* Confetti radial */
+    .confetti-bg {
+      background: radial-gradient(circle, rgba(255,105,51,0.18) 0%, rgba(35,20,15,0) 65%);
+    }
+
+    /* Preview card glow */
+    .preview-glow {
+      box-shadow: 0 0 40px rgba(255,105,51,0.3), 0 0 80px rgba(255,105,51,0.1);
+      transition: box-shadow 0.4s ease;
+    }
+    .preview-glow:hover {
+      box-shadow: 0 0 60px rgba(255,105,51,0.5), 0 0 100px rgba(255,105,51,0.2);
+    }
+
+    /* Play icon hover */
+    .play-icon { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .preview-glow:hover .play-icon { transform: scale(1.15); }
+
+    /* Stat card */
+    .stat-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,105,51,0.12);
+      transition: all 0.25s ease;
+    }
+    .stat-card:hover {
+      border-color: rgba(255,105,51,0.3);
+      background: rgba(255,105,51,0.05);
+      transform: translateY(-2px);
+    }
+
+    /* Destination card dashed border */
+    .dest-card {
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='%23ff6933' stroke-width='1.5' stroke-dasharray='8%2c 8' stroke-dashoffset='0' stroke-linecap='round' opacity='0.4'/%3e%3c/svg%3e");
+      border-radius: 16px;
+    }
+
+    /* Share button */
+    .share-btn {
+      background: linear-gradient(135deg, #ff6933 0%, #ff4d6d 100%);
+      box-shadow: 0 4px 24px rgba(255,105,51,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+      transition: all 0.25s ease;
+    }
+    .share-btn:hover {
+      box-shadow: 0 6px 32px rgba(255,105,51,0.6), inset 0 1px 0 rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+    }
+    .share-btn:active { transform: scale(0.97); }
+
+    /* Secondary buttons */
+    .sec-btn {
+      border: 1.5px solid #ff6933;
+      color: #ff6933;
+      transition: all 0.2s ease;
+    }
+    .sec-btn:hover { background: #ff6933; color: white; }
+    .sec-btn:active { transform: scale(0.97); }
+
+    /* Fade-up animations */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .a1  { animation: fade-up 0.5s ease both; }
+    .a2  { animation: fade-up 0.5s 0.1s ease both; }
+    .a3  { animation: fade-up 0.5s 0.2s ease both; }
+    .a4  { animation: fade-up 0.5s 0.3s ease both; }
+    .a5  { animation: fade-up 0.5s 0.4s ease both; }
+    .a6  { animation: fade-up 0.5s 0.5s ease both; }
+
+    /* Page out */
+    @keyframes page-out { to { opacity: 0; transform: translateY(-16px); } }
+    .page-out { animation: page-out 0.3s ease forwards; }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: rgba(35,20,15,0.95);
+      border: 1px solid rgba(255,105,51,0.4);
+      color: white; padding: 12px 28px; border-radius: 12px;
+      font-size: 13px; font-weight: 600;
+      backdrop-filter: blur(16px);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 100; text-align: center; max-width: 90vw;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,105,51,0.3); border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-[#23140f] text-white min-h-screen">
+
+  <!-- Ambient orbs -->
+  <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+    <div class="orb" style="width:50vw;height:50vw;top:-10%;left:-8%;background:radial-gradient(circle,rgba(255,105,51,0.12) 0%,transparent 70%)"></div>
+    <div class="orb" style="width:45vw;height:45vw;bottom:-8%;right:-5%;background:radial-gradient(circle,rgba(255,105,51,0.1) 0%,transparent 70%)"></div>
+  </div>
+
+  <div id="page" class="relative z-10 flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between px-6 py-4 md:px-12 lg:px-20 border-b border-white/5 sticky top-0 z-40 bg-[#23140f]/80 backdrop-blur-md a1">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-[#ff6933] flex items-center justify-center shadow-lg">
+          <span class="material-symbols-outlined text-white text-2xl" style="font-variation-settings:'FILL' 1">hd</span>
+        </div>
+        <span class="text-lg font-bold tracking-tight">WhatsApp Story HD</span>
+      </div>
+    </header>
+
+    <main class="flex-1 flex flex-col items-center px-6 py-10 md:px-12 lg:px-20 max-w-4xl mx-auto w-full">
+
+      <!-- Success hero -->
+      <div class="relative text-center mb-10 w-full a2">
+        <div class="confetti-bg absolute inset-0 -z-10 scale-150 pointer-events-none"></div>
+
+        <!-- Check circle -->
+        <div class="flex justify-center mb-5">
+          <div class="success-glow w-24 h-24 rounded-full bg-[#ff6933] flex items-center justify-center">
+            <span class="material-symbols-outlined text-white check-pop" style="font-size:52px;font-variation-settings:'FILL' 1">check</span>
+          </div>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-3 tracking-tight">Kompresi Berhasil!</h1>
+
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/15 text-green-400 text-sm font-bold border border-green-500/20 mb-4">
+          <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1">verified</span>
+          Siap Dikirim
+        </div>
+
+        <p class="text-white/50 max-w-md mx-auto text-sm leading-relaxed">
+          Video Anda telah dioptimalkan untuk kualitas HD terbaik di status WhatsApp tanpa pecah.
+        </p>
+      </div>
+
+      <!-- Preview + Stats grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-10 a3">
+
+        <!-- Video preview -->
+        <div class="flex flex-col items-center">
+          <div class="relative group preview-glow rounded-2xl overflow-hidden w-full max-w-[240px] mx-auto border-4 border-[#23140f]"
+            style="aspect-ratio: 9/16;">
+            <!-- Overlay -->
+            <div class="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
+              <span class="play-icon material-symbols-outlined text-white opacity-90"
+                style="font-size:56px;font-variation-settings:'FILL' 1">play_circle</span>
+            </div>
+            <img id="previewImg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAKcVCjuzYANXunSRv45D3DIXwv8XnFYn_9iSqPrIoy-JA315hvGRL2jxSlOV44H3yGbyMfqrNUPoqu-4cQHvZfU6X09qukMJkVJ5RPWeotzNsDrFeUjyR29iDs0UoIKaXyyb9un-6tWmpTrQwRqM_ZlkfpkdMy423IcI-JOb8AjoDRoG_JY99NkE0_AH4Fxy7Pp_8Q48iUfzHZBe_s-BBZi76i12YI_eKRtr1XDGUrHODhtD_wksXTEyRMJDhmTaIvtQmvlhWZEg"
+              alt="Video preview" class="w-full h-full object-cover"/>
+          </div>
+        </div>
+
+        <!-- Stats + destination -->
+        <div class="flex flex-col gap-3 justify-center">
+
+          <!-- Stat: reduction -->
+          <div class="stat-card rounded-2xl p-4 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-[#ff6933]/20 flex items-center justify-center text-[#ff6933] flex-shrink-0">
+              <span class="material-symbols-outlined">auto_graph</span>
+            </div>
+            <div>
+              <p class="text-xs text-white/40 uppercase font-bold tracking-wider">Reduksi Ukuran</p>
+              <p id="statReduction" class="text-2xl font-extrabold text-[#ff6933]">-75%</p>
+            </div>
+          </div>
+
+          <!-- Stat: duration -->
+          <div class="stat-card rounded-2xl p-4 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-[#ff6933]/20 flex items-center justify-center text-[#ff6933] flex-shrink-0">
+              <span class="material-symbols-outlined">schedule</span>
+            </div>
+            <div>
+              <p class="text-xs text-white/40 uppercase font-bold tracking-wider">Durasi</p>
+              <p id="statDuration" class="text-xl font-bold">
+                00:28 <span class="text-sm font-normal text-white/40">(Full HD)</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Stat: resolution -->
+          <div class="stat-card rounded-2xl p-4 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-[#ff6933]/20 flex items-center justify-center text-[#ff6933] flex-shrink-0">
+              <span class="material-symbols-outlined">high_quality</span>
+            </div>
+            <div>
+              <p class="text-xs text-white/40 uppercase font-bold tracking-wider">Resolusi Akhir</p>
+              <p id="statRes" class="text-xl font-bold">1080 × 1920</p>
+            </div>
+          </div>
+
+          <!-- Destination card -->
+          <div class="dest-card p-4 flex items-center justify-between mt-1">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-white/50 text-xl">person</span>
+              </div>
+              <div>
+                <p class="text-xs text-white/40">Kirim ke:</p>
+                <p class="font-bold text-sm">My WhatsApp Story</p>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-[#ff6933]">chat</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="w-full max-w-md space-y-4 mb-16 a4">
+
+        <!-- Primary: Send to WhatsApp -->
+        <button id="sendBtn"
+          class="share-btn w-full h-14 text-white font-extrabold text-base rounded-2xl flex items-center justify-center gap-3 cursor-pointer">
+          <span class="material-symbols-outlined text-xl" style="font-variation-settings:'FILL' 1">send</span>
+          Kirim ke WhatsApp Sekarang
+        </button>
+
+        <!-- Secondary row -->
+        <div class="grid grid-cols-2 gap-4">
+          <button id="downloadBtn"
+            class="sec-btn h-12 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
+            <span class="material-symbols-outlined text-xl">download</span>
+            Unduh File
+          </button>
+          <button id="compressOtherBtn"
+            class="sec-btn h-12 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
+            <span class="material-symbols-outlined text-xl">add_box</span>
+            Kompres Lain
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="py-6 text-center">
+      <p class="text-xs text-white/20">© 2024 WhatsApp Story HD. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast">📱 Pesan</div>
+
+  <script>
+    // ─── Load session data ────────────────────────────────────────────────────
+    const raw = sessionStorage.getItem('videoData');
+    const data = raw ? JSON.parse(raw) : {
+      fileName:     'demo_video.mp4',
+      sizeMB:       48.5,
+      compressedMB: 12.1,
+      reductionPct: 75,
+      duration:     28,
+      width:        1080,
+      height:       1920,
+      quality:      '1080p',
+      autoSend:     true,
+      previewSrc:   '',
+    };
+
+    // ─── Populate stats ───────────────────────────────────────────────────────
+    document.getElementById('statReduction').textContent = `-${data.reductionPct || 75}%`;
+
+    const dur = data.duration || 28;
+    const mm  = Math.floor(dur / 60).toString().padStart(2, '0');
+    const ss  = Math.floor(dur % 60).toString().padStart(2, '0');
+    document.getElementById('statDuration').innerHTML =
+      `${mm}:${ss} <span class="text-sm font-normal text-white/40">(Full HD)</span>`;
+
+    const w = data.width  || 1080;
+    const h = data.height || 1920;
+    document.getElementById('statRes').textContent = `${w} × ${h}`;
+
+    // Preview image
+    if (data.previewSrc && data.previewSrc.startsWith('data:')) {
+      document.getElementById('previewImg').src = data.previewSrc;
+    }
+
+    // ─── Send to WhatsApp ─────────────────────────────────────────────────────
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+      // Try Web Share API first (works on mobile)
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Video Story HD — WhatsApp Story HD',
+            text:  `Video story saya sudah siap! Ukuran dikompresi ${data.reductionPct}% dengan kualitas ${data.quality || '1080p'}.`,
+            url:   window.location.href,
+          });
+          showToast('✅ Dibagikan berhasil!');
+          return;
+        } catch (err) {
+          // User cancelled or API not supported for this content — fall through
+          if (err.name === 'AbortError') return; // user cancelled, do nothing
+        }
+      }
+
+      // Fallback: open WhatsApp with text + trigger download
+      const waText = encodeURIComponent(
+        `Halo! Video story saya sudah dikompresi ke kualitas ${data.quality || '1080p'} ` +
+        `(${formatMB(data.compressedMB)}) — siap diunggah ke WhatsApp Story! 🎥✨`
+      );
+      window.open(`https://wa.me/?text=${waText}`, '_blank');
+      showToast('📲 Buka WhatsApp dan unggah video ke Story Anda!');
+    });
+
+    // ─── Download ─────────────────────────────────────────────────────────────
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      // In a real app, we'd download the compressed blob.
+      // Here we notify the user since we're in demo mode.
+      showToast('⬇️ File siap diunduh! (Demo mode — tidak ada file nyata)');
+    });
+
+    // ─── Compress Other ───────────────────────────────────────────────────────
+    document.getElementById('compressOtherBtn').addEventListener('click', () => {
+      sessionStorage.removeItem('videoData');
+      document.getElementById('page').classList.add('page-out');
+      setTimeout(() => { window.location.href = 'upload_interface.html'; }, 300);
+    });
+
+    // ─── Toast helper ─────────────────────────────────────────────────────────
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 4000);
+    }
+
+    function formatMB(mb) {
+      if (!mb) return '—';
+      return mb >= 1024 ? `${(mb/1024).toFixed(1)} GB` : `${mb.toFixed(1)} MB`;
+    }
+  </script>
+</body>
+</html>
