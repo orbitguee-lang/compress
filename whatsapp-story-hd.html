@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WhatsApp Story HD - Kompresi Cerdas</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#ff6933",
+          "primary-hover": "#ff8559",
+          "background-light": "#f8f6f5",
+          "background-dark": "#23140f",
+        },
+        fontFamily: { "display": ["Inter", "sans-serif"] },
+        borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+      },
+    },
+  }
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; }
+
+  /* Screen transitions */
+  .screen { display: none; }
+  .screen.active { display: flex; }
+
+  /* Glow effects */
+  .glow-orange { box-shadow: 0 0 24px rgba(255, 105, 51, 0.4); }
+  .glow-orange:hover { box-shadow: 0 0 36px rgba(255, 105, 51, 0.6); }
+  .glow-success { box-shadow: 0 0 40px rgba(255, 105, 51, 0.4); }
+
+  /* Particle / background overlay */
+  .particle-overlay {
+    background-image: radial-gradient(circle at 50% 50%, rgba(255, 105, 51, 0.06) 0%, transparent 70%);
+  }
+
+  /* Dashed upload border */
+  .dashed-border {
+    background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='12' ry='12' stroke='%23ff6933' stroke-width='3' stroke-dasharray='12%2c 10' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+    border-radius: 12px;
+  }
+
+  /* Inner shadow for compress button */
+  .inner-shadow-primary { box-shadow: inset 0 2px 4px rgba(255,255,255,0.25), 0 8px 32px rgba(255,105,51,0.4); }
+
+  /* Progress ring */
+  .progress-ring-circle {
+    transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+  }
+
+  /* Confetti bg */
+  .confetti-gradient {
+    background: radial-gradient(circle at 50% 30%, rgba(255,105,51,0.18) 0%, rgba(35,20,15,0) 65%);
+  }
+
+  /* Fade-in animation */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .animate-fadeInUp { animation: fadeInUp 0.5s ease forwards; }
+  .animate-fadeIn { animation: fadeIn 0.4s ease forwards; }
+  .animate-popIn { animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+  .animate-spin-slow { animation: spin 1.4s linear infinite; }
+
+  /* Toast notification */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #1e293b; color: #fff; padding: 12px 24px; border-radius: 12px;
+    font-size: 0.875rem; font-weight: 600; z-index: 9999;
+    transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0;
+    border: 1px solid rgba(255,105,51,0.3);
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  #toast.error { border-color: rgba(239,68,68,0.5); background: #450a0a; }
+  #toast.success { border-color: rgba(34,197,94,0.5); background: #052e16; }
+
+  /* Toggle switch */
+  .toggle-switch { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
+  .toggle-input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    width: 44px; height: 24px; background: #334155; border-radius: 9999px;
+    transition: background 0.2s; position: relative;
+  }
+  .toggle-input:checked + .toggle-track { background: #ff6933; }
+  .toggle-thumb {
+    position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+    background: white; border-radius: 9999px; transition: transform 0.2s;
+  }
+  .toggle-input:checked ~ .toggle-thumb { transform: translateX(20px); }
+
+  /* Quality card selection */
+  .quality-card { cursor: pointer; transition: all 0.2s; }
+  .quality-card.selected { border-color: #ff6933 !important; background: rgba(255,105,51,0.1) !important; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,105,51,0.3); border-radius: 3px; }
+
+  /* Offline screen robot hover */
+  .robot-container:hover .robot-img { transform: scale(1.06); }
+  .robot-img { transition: transform 0.4s ease; }
+</style>
+</head>
+<body class="bg-background-dark font-display text-slate-100 min-h-screen overflow-x-hidden">
+
+<!-- ============================================================ -->
+<!-- SCREEN 1: SPLASH                                             -->
+<!-- ============================================================ -->
+<div id="screen-splash" class="screen active flex-col min-h-screen w-full relative overflow-hidden bg-background-dark">
+  <!-- Background blobs -->
+  <div class="absolute inset-0 z-0 pointer-events-none">
+    <div class="absolute top-[-12%] left-[-8%] w-[45%] h-[45%] bg-primary/10 rounded-full blur-[130px] opacity-60"></div>
+    <div class="absolute bottom-[-15%] right-[-10%] w-[55%] h-[55%] bg-primary/20 rounded-full blur-[160px] opacity-50"></div>
+    <div class="absolute inset-0 particle-overlay"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="relative z-10 w-full px-6 py-5 flex justify-between items-center max-w-7xl mx-auto">
+    <div class="flex items-center gap-3">
+      <div class="bg-gradient-to-br from-amber-400 to-primary p-2.5 rounded-xl shadow-lg">
+        <span class="material-symbols-outlined text-white" style="font-size:26px">hd</span>
+      </div>
+      <h2 class="text-lg font-bold tracking-tight text-white">WhatsApp Story HD</h2>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <main class="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 py-8">
+    <!-- Icon orb -->
+    <div class="mb-8 relative">
+      <div class="absolute inset-0 bg-primary blur-3xl opacity-20 scale-150 rounded-full"></div>
+      <div class="relative w-36 h-36 md:w-52 md:h-52 rounded-3xl bg-gradient-to-tr from-amber-500 via-primary to-orange-600 flex items-center justify-center shadow-2xl p-0.5">
+        <div class="w-full h-full bg-background-dark rounded-[calc(0.75rem*2.2)] flex items-center justify-center">
+          <span class="material-symbols-outlined bg-gradient-to-br from-amber-300 to-primary bg-clip-text text-transparent"
+                style="font-size:72px; -webkit-background-clip:text; background-clip:text; color:transparent">photo_library</span>
+        </div>
+      </div>
+    </div>
+
+    <h1 class="text-4xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight text-white mb-5 animate-fadeInUp">
+      Kompresi Cerdas,<br/>
+      <span class="text-primary">Kualitas Maksimal</span>
+    </h1>
+    <p class="text-base md:text-lg text-primary/70 max-w-xl mb-10 font-medium animate-fadeIn" style="animation-delay:0.2s; opacity:0; animation-fill-mode:forwards">
+      Optimalkan status WhatsApp Anda tanpa kehilangan detail. Teknologi AI terbaru untuk video dan foto jernih.
+    </p>
+
+    <!-- CTA Button -->
+    <div class="w-full max-w-xs animate-fadeIn" style="animation-delay:0.35s; opacity:0; animation-fill-mode:forwards">
+      <button id="splash-btn" onclick="handleSplashStart()"
+        class="group relative flex w-full h-16 items-center justify-center overflow-hidden rounded-xl bg-primary text-white text-lg font-bold tracking-wide glow-orange hover:bg-primary-hover transition-all duration-300 active:scale-95">
+        <span class="relative z-10 flex items-center gap-2">
+          Mulai Sekarang
+          <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform duration-200">arrow_forward</span>
+        </span>
+      </button>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="relative z-10 w-full pb-10 px-6 flex flex-col items-center gap-4">
+    <p class="text-xs font-semibold tracking-[0.2em] uppercase text-primary/60">Menyiapkan Mesin Kompresi</p>
+    <div class="hidden md:block absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-4xl pointer-events-none">
+      <div class="h-28 bg-gradient-to-t from-primary/20 to-transparent blur-2xl rounded-t-full"></div>
+    </div>
+  </footer>
+
+  <!-- Hidden image context requirement -->
+  <div class="hidden">
+    <img data-alt="Abstract orange and amber geometric particles background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrVTaRGczS8fp0lRef5Lmw42geCn95WJ2cGcn-QSP7OlkB4xDzDXrWRbQlszjlEo9wqxvLsuTyNK7r1mNX86XCqep_NINU_DQGqTTrUolLmBZkSUcD0RCtU6IwZ50iDY5eZVoBuAFZjAdajwwUBz2vnmOS-5No9q-Wv-3d8IW7TmNHoqdp8JUlflbaoOTNKuur-sxdZYnIszAkr65ARamX_xHCUrF9YzF_rQHATfJaLGi6MEPnkn1mM1RS9GVsk5nbHGFF0-mP4wc"/>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 2: OFFLINE                                            -->
+<!-- ============================================================ -->
+<div id="screen-offline" class="screen flex-col min-h-screen w-full bg-background-dark">
+  <!-- Header -->
+  <header class="flex items-center justify-between border-b border-primary/20 px-6 py-4 md:px-20 lg:px-40">
+    <div class="flex items-center gap-3">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
+        <span class="material-symbols-outlined" style="font-size:22px">hd</span>
+      </div>
+      <h2 class="text-white text-xl font-bold tracking-tight">WhatsApp Story HD</h2>
+    </div>
+    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+      <span class="material-symbols-outlined">wifi_off</span>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="flex flex-1 flex-col items-center justify-center px-6 py-16">
+    <div class="flex max-w-md flex-col items-center text-center">
+      <!-- Robot illustration -->
+      <div class="robot-container mb-8 flex h-64 w-64 items-center justify-center rounded-full bg-primary/5 relative">
+        <div class="robot-img h-52 w-52 bg-center bg-no-repeat bg-contain"
+          style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBfXpA7p28VFJuAtFxn07gJ9jVThEYFBhMN5dXUWeY15az-gkWLnxnYjTU4jXRJg_f-vx4IJPa9gLmKsoqUtFlYKimEvDqhKQB_uk2SiPx1RXzG85MC3BYwNaqhKnzbfMxVMogx9pEektWlly61BUFP6d02XajM_VDBpKq1M-NzV5CpcDUJKjT4yW29G3u3TLmw4583vtlOjrht0QOopDGrrjU2aG0sYsBZSiSTAWS4kKBgn7aMCPiyq8olcCyf-jOYbIAb8HL2WU0');"
+          data-alt="Confused robot illustration"></div>
+      </div>
+
+      <h1 class="mb-4 text-3xl md:text-4xl font-extrabold text-white">Ups! Koneksi Terputus</h1>
+      <p class="mb-10 text-base leading-relaxed text-slate-400">
+        Sepertinya Anda sedang offline. Periksa koneksi internet Anda untuk melanjutkan kompresi media dengan kualitas HD.
+      </p>
+
+      <button onclick="handleRetry()"
+        class="group flex w-full max-w-xs items-center justify-center gap-2 overflow-hidden rounded-xl bg-primary px-8 py-4 text-white font-bold transition-all hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/25 active:scale-95">
+        <span class="material-symbols-outlined group-hover:rotate-180 transition-transform duration-500">refresh</span>
+        <span>Coba Lagi</span>
+      </button>
+    </div>
+  </main>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 3: UPLOAD                                             -->
+<!-- ============================================================ -->
+<div id="screen-upload" class="screen flex-col min-h-screen w-full bg-background-dark">
+  <!-- Header -->
+  <header class="flex items-center justify-between border-b border-primary/20 px-6 py-4 lg:px-20">
+    <div class="flex items-center gap-4">
+      <div class="size-8 text-primary">
+        <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path clip-rule="evenodd" d="M24 18.4228L42 11.475V34.3663C42 34.7796 41.7457 35.1504 41.3601 35.2992L24 42V18.4228Z" fill="currentColor" fill-rule="evenodd"/>
+          <path clip-rule="evenodd" d="M24 8.18819L33.4123 11.574L24 15.2071L14.5877 11.574L24 8.18819ZM9 15.8487L21 20.4805V37.6263L9 32.9945V15.8487ZM27 37.6263V20.4805L39 15.8487V32.9945L27 37.6263ZM25.354 2.29885C24.4788 1.98402 23.5212 1.98402 22.646 2.29885L4.98454 8.65208C3.7939 9.08038 3 10.2097 3 11.475V34.3663C3 36.0196 4.01719 37.5026 5.55962 38.098L22.9197 44.7987C23.6149 45.0671 24.3851 45.0671 25.0803 44.7987L42.4404 38.098C43.9828 37.5026 45 36.0196 45 34.3663V11.475C45 10.2097 44.2061 9.08038 43.0155 8.65208L25.354 2.29885Z" fill="currentColor" fill-rule="evenodd"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold tracking-tight">WhatsApp Story <span class="text-primary">HD</span></h2>
+    </div>
+    <div class="hidden md:flex flex-col items-end">
+      <span class="text-sm font-bold">Premium User</span>
+      <span class="text-xs text-primary">Pro Status Active</span>
+    </div>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center justify-start p-6 lg:p-10 max-w-[1200px] mx-auto w-full gap-8">
+    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+      <!-- LEFT: Upload zone -->
+      <div class="lg:col-span-7 flex flex-col gap-6">
+        <!-- Drop Zone -->
+        <div id="drop-zone"
+          class="dashed-border relative group cursor-pointer flex flex-col items-center justify-center p-10 bg-primary/5 hover:bg-primary/10 transition-all min-h-[380px]"
+          ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)"
+          onclick="document.getElementById('file-input').click()">
+          <div class="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(circle_at_center,_#ff6933,_transparent_70%)] rounded-xl"></div>
+          <div class="relative flex flex-col items-center gap-5">
+            <div class="relative">
+              <div class="absolute -inset-4 bg-primary/25 blur-2xl rounded-full"></div>
+              <div class="relative bg-gradient-to-br from-primary to-[#ff8c66] p-5 rounded-full shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-white" style="font-size:52px">cloud_upload</span>
+              </div>
+            </div>
+            <div class="text-center">
+              <h3 class="text-2xl font-bold mb-2">Upload Video Story</h3>
+              <p class="text-slate-400">Tarik dan lepas video di sini atau klik untuk memilih file</p>
+            </div>
+            <button class="mt-2 px-8 py-3 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/30 hover:scale-105 transition-transform pointer-events-none">
+              Pilih Video
+            </button>
+          </div>
+          <input id="file-input" type="file" accept="video/mp4,video/quicktime,video/mov,video/avi,video/webm" class="hidden" onchange="handleFileSelect(event)"/>
+        </div>
+
+        <!-- Warning notice -->
+        <div class="bg-primary/10 border border-primary/30 rounded-xl p-5 flex items-start gap-4">
+          <span class="material-symbols-outlined text-primary" style="font-size:28px">warning</span>
+          <div class="flex flex-col gap-1">
+            <p class="text-primary font-bold text-sm leading-snug">Batas Ukuran File: Minimum 13 MB - Maksimum 550 MB</p>
+            <p class="text-primary/80 font-medium text-xs">Batas Durasi Video: Minimum 5 Detik - Maksimum 1 Menit</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Config panel -->
+      <div class="lg:col-span-5 flex flex-col gap-5">
+        <!-- Preview card -->
+        <div class="bg-primary/5 border border-primary/20 rounded-xl overflow-hidden shadow-sm">
+          <div class="relative aspect-video bg-slate-800 flex items-center justify-center overflow-hidden">
+            <img id="preview-thumb"
+              class="w-full h-full object-cover"
+              data-alt="Video preview thumbnail"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9QXVhQPlmlkfinfvWEA3ZA0_jpxHJlJwkEAMc_jtkA5LXSux7_C2dmrKDMzXxoPkylN2R-2UNq_EkMkOcM7v_ADgJjeKzfgQK1GUq07PTEWRuo2rjclNZrCB9QyquDtKAwgf7F9LS4y_wGGPatj9Irw9S5O892uosQB4FTXZftlcBAmROrmxa-fOdOESipqyY6VfgE6pA3Rl7IB5z477QXjZzyIKUF_WUTdrx4knYqS0Wt-DqPbYoRZ1zgxVfpw9sGZ1O_VmAM8k"/>
+            <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <span class="material-symbols-outlined text-white" style="font-size:44px">play_circle</span>
+            </div>
+            <div class="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] text-white font-bold tracking-widest uppercase">Preview</div>
+          </div>
+          <div class="p-4 space-y-3">
+            <div class="flex justify-between items-start">
+              <h4 id="file-name" class="font-bold truncate max-w-[200px]">cinematic_travel_vlog.mp4</h4>
+              <span class="text-primary text-xs font-bold px-2 py-1 bg-primary/10 rounded">Source</span>
+            </div>
+            <div class="grid grid-cols-2 gap-y-2 text-sm text-slate-400">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">attachment</span>
+                <span id="file-size">45.8 MB</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">schedule</span>
+                <span id="file-duration">00:28s</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">aspect_ratio</span>
+                <span id="file-resolution">1080 x 1920</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">high_quality</span>
+                <span>H.264</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quality selection -->
+        <div class="space-y-3">
+          <h3 class="font-bold flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">tune</span>
+            Pilih Kualitas Output
+          </h3>
+          <!-- 1080p -->
+          <div class="quality-card selected relative" onclick="selectQuality('1080p', this)" data-quality="1080p">
+            <div class="absolute -right-2 -top-2 z-10 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">RECOMMENDED</div>
+            <div class="p-4 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="bg-primary p-2 rounded-lg text-white">
+                  <span class="material-symbols-outlined" style="font-size:20px">hd</span>
+                </div>
+                <div>
+                  <p class="font-bold text-sm">1080p 60fps Ultra HD</p>
+                  <p class="text-xs text-slate-400">Best for WhatsApp HD Story</p>
+                </div>
+              </div>
+              <span class="material-symbols-outlined text-primary" id="check-1080p">check_circle</span>
+            </div>
+          </div>
+          <!-- 720p -->
+          <div class="quality-card" onclick="selectQuality('720p', this)" data-quality="720p">
+            <div class="p-4 rounded-xl border border-primary/20 bg-transparent hover:border-primary/50 transition-colors flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="bg-slate-800 p-2 rounded-lg text-slate-400">
+                  <span class="material-symbols-outlined" style="font-size:20px">high_quality</span>
+                </div>
+                <div>
+                  <p class="font-bold text-sm">720p 60fps HD</p>
+                  <p class="text-xs text-slate-400">Faster compression, standard HD</p>
+                </div>
+              </div>
+              <div id="check-720p" class="size-6 border-2 border-slate-700 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toggle: auto-send to WhatsApp -->
+        <div class="bg-primary/5 p-4 rounded-xl border border-primary/10 flex items-center justify-between">
+          <div class="flex flex-col">
+            <p class="font-bold text-sm">Langsung Kirim ke Chat WhatsApp</p>
+            <p class="text-xs text-slate-500">Buka WhatsApp otomatis setelah selesai</p>
+          </div>
+          <label class="toggle-switch">
+            <input id="auto-send-toggle" type="checkbox" class="toggle-input" checked/>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+
+        <!-- Compress button -->
+        <button onclick="handleCompress()"
+          class="w-full py-5 rounded-xl bg-gradient-to-r from-primary to-[#ff8c66] text-white font-bold text-lg inner-shadow-primary hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+          <span class="material-symbols-outlined">auto_fix_high</span>
+          Kompres Sekarang
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer stats -->
+    <div class="w-full flex flex-wrap justify-center gap-10 py-8 border-t border-primary/10 opacity-60">
+      <div class="flex flex-col items-center">
+        <span class="text-2xl font-bold">4.8M+</span>
+        <span class="text-xs uppercase tracking-widest text-slate-400">Videos Processed</span>
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="text-2xl font-bold">1080p</span>
+        <span class="text-xs uppercase tracking-widest text-slate-400">Max Resolution</span>
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="text-2xl font-bold">0.02s</span>
+        <span class="text-xs uppercase tracking-widest text-slate-400">Avg Latency</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 4: COMPRESSION PROGRESS                               -->
+<!-- ============================================================ -->
+<div id="screen-progress" class="screen flex-col min-h-screen w-full bg-background-dark">
+  <!-- Header -->
+  <header class="flex items-center justify-between border-b border-primary/10 px-6 py-4 lg:px-40">
+    <div class="flex items-center gap-3">
+      <div class="text-primary">
+        <span class="material-symbols-outlined" style="font-size:30px">hd</span>
+      </div>
+      <h2 class="text-lg font-bold tracking-tight">WhatsApp Story HD</h2>
+    </div>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center justify-center px-6 py-8 max-w-[580px] mx-auto w-full">
+    <!-- Progress ring -->
+    <div class="relative flex items-center justify-center mb-10">
+      <svg class="w-60 h-60" viewBox="0 0 256 256">
+        <!-- Background track -->
+        <circle cx="128" cy="128" r="108" fill="transparent" stroke="rgba(255,105,51,0.12)" stroke-width="10"/>
+        <!-- Progress arc -->
+        <circle id="progress-ring" class="progress-ring-circle"
+          cx="128" cy="128" r="108" fill="transparent"
+          stroke="#ff6933" stroke-width="10"
+          stroke-linecap="round"
+          stroke-dasharray="678.58"
+          stroke-dashoffset="678.58"/>
+      </svg>
+      <div class="absolute flex flex-col items-center">
+        <span id="progress-pct" class="text-5xl font-black text-primary">0%</span>
+        <span class="text-xs font-semibold text-primary/60 mt-1 uppercase tracking-widest">Compressing</span>
+      </div>
+    </div>
+
+    <!-- Status text -->
+    <div class="w-full text-center space-y-2 mb-10">
+      <p id="progress-status" class="text-xl font-semibold animate-pulse">Menganalisis struktur video...</p>
+      <div class="flex items-center justify-center gap-2 text-primary/80">
+        <span class="material-symbols-outlined text-base">timer</span>
+        <span id="progress-time" class="text-sm font-medium">Sisa waktu: 00:15</span>
+      </div>
+    </div>
+
+    <!-- Technical log -->
+    <div class="w-full bg-primary/5 rounded-xl p-4 border border-primary/10 mb-8 space-y-3">
+      <div id="log-step-1" class="flex items-center gap-3 opacity-30">
+        <span class="material-symbols-outlined text-green-400" style="font-size:18px">check_circle</span>
+        <p class="text-sm">Menganalisis frame video...</p>
+      </div>
+      <div id="log-step-2" class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-primary animate-spin-slow" style="font-size:18px">sync</span>
+        <p class="text-sm font-medium">Menyesuaikan resolusi HD...</p>
+      </div>
+      <div id="log-step-3" class="flex items-center gap-3 hidden">
+        <span class="material-symbols-outlined text-primary animate-spin-slow" style="font-size:18px">sync</span>
+        <p class="text-sm font-medium">Mengoptimalkan bitrate video...</p>
+      </div>
+      <div id="log-step-4" class="flex items-center gap-3 hidden">
+        <span class="material-symbols-outlined text-primary animate-spin-slow" style="font-size:18px">sync</span>
+        <p class="text-sm font-medium">Memfinalisasi output HD...</p>
+      </div>
+    </div>
+
+    <!-- Size comparison bars -->
+    <div class="w-full space-y-4 mb-10">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-primary/60">Perbandingan Ukuran</h3>
+      <div class="space-y-3">
+        <!-- Original -->
+        <div>
+          <div class="flex justify-between text-xs font-medium mb-1">
+            <span>Original</span>
+            <span id="original-size-label">48.5 MB</span>
+          </div>
+          <div class="h-3 w-full bg-slate-700/50 rounded-full overflow-hidden">
+            <div class="h-full bg-slate-500 rounded-full w-full"></div>
+          </div>
+        </div>
+        <!-- Compressed -->
+        <div>
+          <div class="flex justify-between text-xs font-medium mb-1">
+            <span class="text-primary">Terkompresi (Estimasi)</span>
+            <span id="compressed-size-label" class="text-primary">--</span>
+          </div>
+          <div class="h-3 w-full bg-primary/10 rounded-full overflow-hidden">
+            <div id="compressed-bar" class="h-full bg-primary rounded-full glow-orange transition-all duration-500" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cancel button -->
+    <button onclick="handleCancel()"
+      class="w-full py-4 rounded-xl border border-primary/25 text-primary font-bold hover:bg-primary/5 transition-all flex items-center justify-center gap-2">
+      <span class="material-symbols-outlined">close</span>
+      Batalkan
+    </button>
+  </main>
+
+  <footer class="p-5 text-center">
+    <p class="text-[10px] text-slate-600 uppercase tracking-[0.2em]">Powered by HDRender Engine v2.4</p>
+  </footer>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 5: SUCCESS                                            -->
+<!-- ============================================================ -->
+<div id="screen-success" class="screen flex-col min-h-screen w-full bg-background-dark">
+  <!-- Sticky header -->
+  <header class="flex items-center justify-between border-b border-primary/20 px-6 py-4 md:px-40 bg-background-dark/60 backdrop-blur-md sticky top-0 z-50">
+    <div class="flex items-center gap-3">
+      <div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+        <span class="material-symbols-outlined" style="font-size:20px">hd</span>
+      </div>
+      <h2 class="text-lg font-bold tracking-tight">WhatsApp Story HD</h2>
+    </div>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center px-4 py-10 md:px-12">
+    <!-- Success header -->
+    <div class="relative w-full max-w-2xl text-center mb-8">
+      <div class="absolute inset-0 confetti-gradient -z-10 scale-150"></div>
+      <!-- Check icon -->
+      <div class="mb-5 flex justify-center">
+        <div class="size-24 bg-primary rounded-full flex items-center justify-center glow-success animate-popIn">
+          <span class="material-symbols-outlined text-white" style="font-size:52px; font-variation-settings:'wght' 700">check</span>
+        </div>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-3 tracking-tight">Kompresi Berhasil!</h1>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm font-semibold mb-4">
+        <span class="material-symbols-outlined" style="font-size:14px">verified</span>
+        Siap Dikirim
+      </div>
+      <p class="text-slate-400 max-w-sm mx-auto text-sm">Video Anda telah dioptimalkan untuk kualitas HD terbaik di status WhatsApp tanpa pecah.</p>
+    </div>
+
+    <!-- Preview + Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mb-10">
+      <!-- Video preview -->
+      <div class="relative group flex justify-center">
+        <div class="absolute -inset-1 bg-primary/30 rounded-xl blur-xl group-hover:bg-primary/50 transition-all duration-300"></div>
+        <div class="relative w-full max-w-[260px] aspect-[9/16] bg-slate-800 rounded-xl overflow-hidden shadow-2xl border-4 border-background-dark">
+          <div class="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-all z-10">
+            <span class="material-symbols-outlined text-white group-hover:scale-110 transition-transform cursor-pointer" style="font-size:56px; opacity:0.85">play_circle</span>
+          </div>
+          <img class="w-full h-full object-cover"
+            data-alt="Vertical cinematic video preview"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAKcVCjuzYANXunSRv45D3DIXwv8XnFYn_9iSqPrIoy-JA315hvGRL2jxSlOV44H3yGbyMfqrNUPoqu-4cQHvZfU6X09qukMJkVJ5RPWeotzNsDrFeUjyR29iDs0UoIKaXyyb9un-6tWmpTrQwRqM_ZlkfpkdMy423IcI-JOb8AjoDRoG_JY99NkE0_AH4Fxy7Pp_8Q48iUfzHZBe_s-BBZi76i12YI_eKRtr1XDGUrHODhtD_wksXTEyRMJDhmTaIvtQmvlhWZEg"
+            alt="Preview video"/>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="flex flex-col justify-center gap-4">
+        <div class="grid grid-cols-1 gap-3">
+          <!-- Reduction -->
+          <div class="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-primary/10">
+            <div class="size-12 rounded-lg bg-primary/20 flex items-center justify-center text-primary shrink-0">
+              <span class="material-symbols-outlined">auto_graph</span>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Reduksi Ukuran</p>
+              <p id="stat-reduction" class="text-2xl font-extrabold text-primary">-75%</p>
+            </div>
+          </div>
+          <!-- Duration -->
+          <div class="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-primary/10">
+            <div class="size-12 rounded-lg bg-primary/20 flex items-center justify-center text-primary shrink-0">
+              <span class="material-symbols-outlined">schedule</span>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Durasi</p>
+              <p id="stat-duration" class="text-xl font-bold">00:28 <span class="text-sm font-normal text-slate-400">(Full HD)</span></p>
+            </div>
+          </div>
+          <!-- Resolution -->
+          <div class="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-primary/10">
+            <div class="size-12 rounded-lg bg-primary/20 flex items-center justify-center text-primary shrink-0">
+              <span class="material-symbols-outlined">high_quality</span>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Resolusi Akhir</p>
+              <p id="stat-resolution" class="text-xl font-bold">1080 x 1920</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Destination card -->
+        <div class="p-4 rounded-xl bg-primary/5 border border-dashed border-primary/30 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="size-10 rounded-full bg-slate-700 flex items-center justify-center">
+              <span class="material-symbols-outlined text-slate-400" style="font-size:20px">person</span>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500">Kirim ke:</p>
+              <p class="font-bold text-sm">My WhatsApp Story</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-primary">chat</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="w-full max-w-md space-y-4 mb-12">
+      <button onclick="handleSendWhatsApp()"
+        class="w-full h-14 bg-gradient-to-r from-[#ff6933] to-[#ff4d6d] text-white rounded-xl font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-primary/25 hover:opacity-90 active:scale-95 transition-all">
+        <span class="material-symbols-outlined">send</span>
+        Kirim ke WhatsApp Sekarang
+      </button>
+      <div class="grid grid-cols-2 gap-4">
+        <button onclick="handleDownload()"
+          class="h-12 border-2 border-primary text-primary rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all active:scale-95">
+          <span class="material-symbols-outlined" style="font-size:20px">download</span>
+          Unduh File
+        </button>
+        <button onclick="handleCompressAnother()"
+          class="h-12 border-2 border-primary text-primary rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all active:scale-95">
+          <span class="material-symbols-outlined" style="font-size:20px">add_box</span>
+          Kompres Lain
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="py-8 text-center text-slate-600 text-sm">
+    <p>© 2024 WhatsApp Story HD. All rights reserved.</p>
+  </footer>
+</div>
+
+<!-- ============================================================ -->
+<!-- TOAST NOTIFICATION                                           -->
+<!-- ============================================================ -->
+<div id="toast"></div>
+
+<!-- ============================================================ -->
+<!-- JAVASCRIPT                                                   -->
+<!-- ============================================================ -->
+<script>
+// ─── App State ─────────────────────────────────────────────────
+const state = {
+  currentScreen: 'splash',
+  selectedFile: null,
+  selectedQuality: '1080p',
+  autoSend: true,
+  fileMeta: {
+    name: 'cinematic_travel_vlog.mp4',
+    size: 45.8,          // MB
+    duration: 28,        // seconds
+    width: 1080,
+    height: 1920,
+    objectUrl: null,
+  },
+  compression: {
+    interval: null,
+    progress: 0,
+    totalSeconds: 15,
+    remainingSeconds: 15,
+  },
+  result: {
+    compressedSizeMB: 0,
+    reductionPct: 0,
+  }
+};
+
+// ─── Screen Navigation ─────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + id);
+  if (el) {
+    el.classList.add('active');
+    el.classList.add('animate-fadeIn');
+    setTimeout(() => el.classList.remove('animate-fadeIn'), 400);
+  }
+  state.currentScreen = id;
+  window.scrollTo(0, 0);
+}
+
+// ─── Online / Offline Detection ────────────────────────────────
+function isOnline() { return navigator.onLine; }
+
+window.addEventListener('offline', () => {
+  if (state.currentScreen !== 'offline') showScreen('offline');
+  showToast('Koneksi internet terputus', 'error');
+});
+window.addEventListener('online', () => {
+  showToast('Koneksi internet tersambung kembali!', 'success');
+});
+
+// ─── Toast ─────────────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  setTimeout(() => { t.className = ''; }, 3000);
+}
+
+// ─── Splash Screen ─────────────────────────────────────────────
+function handleSplashStart() {
+  if (!isOnline()) {
+    showScreen('offline');
+    return;
+  }
+  showScreen('upload');
+}
+
+// ─── Offline Screen ────────────────────────────────────────────
+function handleRetry() {
+  if (isOnline()) {
+    showScreen('upload');
+  } else {
+    // Animate the refresh icon briefly then show message
+    showToast('Masih offline. Periksa koneksi Anda.', 'error');
+  }
+}
+
+// ─── Upload: drag & drop ───────────────────────────────────────
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.add('bg-primary/20');
+}
+function handleDragLeave(e) {
+  document.getElementById('drop-zone').classList.remove('bg-primary/20');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('bg-primary/20');
+  const files = e.dataTransfer.files;
+  if (files.length) processFile(files[0]);
+}
+function handleFileSelect(e) {
+  const files = e.target.files;
+  if (files.length) processFile(files[0]);
+}
+
+// ─── File Processing & Validation ──────────────────────────────
+function processFile(file) {
+  // Validate type
+  const validTypes = ['video/mp4', 'video/quicktime', 'video/mov', 'video/avi', 'video/webm'];
+  if (!validTypes.includes(file.type) && !file.name.match(/\.(mp4|mov|avi|webm|mkv)$/i)) {
+    showToast('Format file tidak didukung. Gunakan MP4, MOV, atau AVI.', 'error');
+    return;
+  }
+
+  // Validate size (13 MB – 550 MB)
+  const sizeMB = file.size / (1024 * 1024);
+  if (sizeMB < 13) {
+    showToast(`Ukuran file terlalu kecil (${sizeMB.toFixed(1)} MB). Minimum 13 MB.`, 'error');
+    return;
+  }
+  if (sizeMB > 550) {
+    showToast(`Ukuran file terlalu besar (${sizeMB.toFixed(1)} MB). Maksimum 550 MB.`, 'error');
+    return;
+  }
+
+  // Read duration via a temporary video element
+  const objectUrl = URL.createObjectURL(file);
+  const videoEl = document.createElement('video');
+  videoEl.preload = 'metadata';
+  videoEl.src = objectUrl;
+
+  videoEl.onloadedmetadata = function () {
+    const durationSec = Math.floor(videoEl.duration);
+    if (durationSec < 5) {
+      showToast('Durasi terlalu pendek. Minimum 5 detik.', 'error');
+      URL.revokeObjectURL(objectUrl);
+      return;
+    }
+    if (durationSec > 60) {
+      showToast('Durasi terlalu panjang. Maksimum 1 menit.', 'error');
+      URL.revokeObjectURL(objectUrl);
+      return;
+    }
+
+    // Save state
+    state.selectedFile = file;
+    state.fileMeta = {
+      name: file.name,
+      size: parseFloat(sizeMB.toFixed(1)),
+      duration: durationSec,
+      width: videoEl.videoWidth || 1080,
+      height: videoEl.videoHeight || 1920,
+      objectUrl: objectUrl,
+    };
+    updatePreviewPanel();
+    showToast('Video berhasil dipilih!', 'success');
+  };
+
+  videoEl.onerror = function () {
+    // Fallback: accept the file with dummy metadata
+    state.selectedFile = file;
+    state.fileMeta = {
+      name: file.name,
+      size: parseFloat(sizeMB.toFixed(1)),
+      duration: 28,
+      width: 1080,
+      height: 1920,
+      objectUrl: objectUrl,
+    };
+    updatePreviewPanel();
+    showToast('Video dipilih (metadata tidak dapat dibaca).', '');
+  };
+};
+
+function updatePreviewPanel() {
+  const m = state.fileMeta;
+  document.getElementById('file-name').textContent = m.name;
+  document.getElementById('file-size').textContent = m.size + ' MB';
+  document.getElementById('file-duration').textContent = formatTime(m.duration);
+  document.getElementById('file-resolution').textContent = m.width + ' x ' + m.height;
+
+  // Show video frame as thumbnail if possible
+  if (m.objectUrl) {
+    const thumb = document.getElementById('preview-thumb');
+    thumb.src = m.objectUrl;
+  }
+}
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  return m + ':' + s + 's';
+}
+
+// ─── Quality Selection ─────────────────────────────────────────
+function selectQuality(quality, cardEl) {
+  state.selectedQuality = quality;
+
+  // Reset all cards
+  document.querySelectorAll('.quality-card').forEach(c => {
+    c.classList.remove('selected');
+    const q = c.dataset.quality;
+    const check = document.getElementById('check-' + q);
+    if (check) {
+      if (q === '1080p') {
+        check.textContent = 'check_circle';
+        check.style.opacity = '0.3';
+      } else {
+        check.className = 'size-6 border-2 border-slate-700 rounded-full';
+        check.textContent = '';
+      }
+    }
+  });
+
+  // Activate clicked
+  cardEl.classList.add('selected');
+  if (quality === '1080p') {
+    const c = document.getElementById('check-1080p');
+    c.style.opacity = '1';
+  } else {
+    const c = document.getElementById('check-720p');
+    c.className = 'material-symbols-outlined text-primary';
+    c.textContent = 'check_circle';
+  }
+}
+
+// ─── Compress button ───────────────────────────────────────────
+function handleCompress() {
+  if (!isOnline()) { showScreen('offline'); return; }
+
+  // If no real file selected, use the demo data
+  const m = state.fileMeta;
+
+  // Update progress screen meta
+  document.getElementById('original-size-label').textContent = m.size + ' MB';
+
+  // Compute compressed estimate (1080p saves ~75%, 720p saves ~80%)
+  const ratio = state.selectedQuality === '1080p' ? 0.25 : 0.20;
+  const compressedMB = parseFloat((m.size * ratio).toFixed(1));
+  const reductionPct = Math.round((1 - ratio) * 100);
+
+  state.result.compressedSizeMB = compressedMB;
+  state.result.reductionPct = reductionPct;
+
+  document.getElementById('compressed-size-label').textContent = compressedMB + ' MB';
+
+  // Reset progress state
+  state.compression.progress = 0;
+  state.compression.remainingSeconds = 15;
+  state.compression.totalSeconds = 15;
+
+  document.getElementById('progress-pct').textContent = '0%';
+  document.getElementById('progress-time').textContent = 'Sisa waktu: 00:15';
+  document.getElementById('progress-status').textContent = 'Menganalisis struktur video...';
+  document.getElementById('compressed-bar').style.width = '0%';
+  setProgressRing(0);
+  resetLogs();
+
+  showScreen('progress');
+  startCompression();
+}
+
+// ─── Progress Ring ─────────────────────────────────────────────
+function setProgressRing(pct) {
+  const circumference = 678.58; // 2 * pi * 108
+  const offset = circumference - (pct / 100) * circumference;
+  document.getElementById('progress-ring').style.strokeDashoffset = offset;
+}
+
+// ─── Compression Simulation ────────────────────────────────────
+const statusMessages = [
+  'Menganalisis struktur video...',
+  'Memetakan frame kunci...',
+  'Mengoptimalkan bitrate...',
+  'Menyesuaikan resolusi HD...',
+  'Menerapkan filter kualitas...',
+  'Mengompres audio track...',
+  'Menyempurnakan output...',
+  'Finalisasi kompresi...',
+];
+
+function resetLogs() {
+  document.getElementById('log-step-1').classList.remove('opacity-30');
+  document.getElementById('log-step-1').querySelector('span').textContent = 'sync';
+  document.getElementById('log-step-1').querySelector('span').className = 'material-symbols-outlined text-primary animate-spin-slow';
+  document.getElementById('log-step-1').querySelector('p').textContent = 'Menganalisis frame video...';
+  document.getElementById('log-step-2').classList.remove('hidden');
+  document.getElementById('log-step-2').querySelector('p').textContent = 'Menyesuaikan resolusi HD...';
+  document.getElementById('log-step-3').classList.add('hidden');
+  document.getElementById('log-step-4').classList.add('hidden');
+}
+
+function startCompression() {
+  if (state.compression.interval) clearInterval(state.compression.interval);
+
+  const TOTAL_DURATION_MS = 15000;
+  const TICK_MS = 150;
+  const increment = (TICK_MS / TOTAL_DURATION_MS) * 100;
+  let elapsedMs = 0;
+  let msgIndex = 0;
+
+  state.compression.interval = setInterval(() => {
+    elapsedMs += TICK_MS;
+    state.compression.progress = Math.min(100, state.compression.progress + increment);
+    const pct = Math.floor(state.compression.progress);
+
+    // Update ring & percentage text
+    setProgressRing(pct);
+    document.getElementById('progress-pct').textContent = pct + '%';
+
+    // Countdown timer
+    const remaining = Math.max(0, 15 - Math.floor(elapsedMs / 1000));
+    const mins = Math.floor(remaining / 60).toString().padStart(2, '0');
+    const secs = (remaining % 60).toString().padStart(2, '0');
+    document.getElementById('progress-time').textContent = `Sisa waktu: ${mins}:${secs}`;
+
+    // Update status message
+    const targetMsg = Math.floor((pct / 100) * statusMessages.length);
+    if (targetMsg > msgIndex && targetMsg < statusMessages.length) {
+      msgIndex = targetMsg;
+      document.getElementById('progress-status').textContent = statusMessages[msgIndex];
+    }
+
+    // Animated compression bar - grows inversely (100% → compressed ratio)
+    // At pct% done, bar shows pct% of compressed fraction
+    const finalBarWidth = state.result.compressedSizeMB / state.fileMeta.size * 100;
+    const barWidth = (pct / 100) * finalBarWidth;
+    document.getElementById('compressed-bar').style.width = barWidth.toFixed(1) + '%';
+
+    // Log step updates
+    if (pct >= 30 && pct < 60) {
+      document.getElementById('log-step-1').classList.add('opacity-30');
+      document.getElementById('log-step-1').querySelector('span').textContent = 'check_circle';
+      document.getElementById('log-step-1').querySelector('span').className = 'material-symbols-outlined text-green-400';
+      document.getElementById('log-step-3').classList.remove('hidden');
+    }
+    if (pct >= 60) {
+      document.getElementById('log-step-2').classList.add('opacity-30');
+      document.getElementById('log-step-2').querySelector('span').textContent = 'check_circle';
+      document.getElementById('log-step-2').querySelector('span').className = 'material-symbols-outlined text-green-400';
+      document.getElementById('log-step-3').classList.remove('hidden');
+      document.getElementById('log-step-3').querySelector('span').textContent = 'sync';
+      document.getElementById('log-step-3').querySelector('span').className = 'material-symbols-outlined text-primary animate-spin-slow';
+      document.getElementById('log-step-4').classList.remove('hidden');
+    }
+
+    // Complete
+    if (pct >= 100) {
+      clearInterval(state.compression.interval);
+      state.compression.interval = null;
+      setTimeout(() => {
+        buildSuccessScreen();
+        showScreen('success');
+        if (state.autoSend) {
+          setTimeout(() => handleSendWhatsApp(), 1200);
+        }
+      }, 500);
+    }
+  }, TICK_MS);
+}
+
+// ─── Cancel Compression ────────────────────────────────────────
+function handleCancel() {
+  if (state.compression.interval) {
+    clearInterval(state.compression.interval);
+    state.compression.interval = null;
+  }
+  showToast('Kompresi dibatalkan.', '');
+  showScreen('upload');
+}
+
+// ─── Build Success Screen ──────────────────────────────────────
+function buildSuccessScreen() {
+  const m = state.fileMeta;
+  const r = state.result;
+  const q = state.selectedQuality;
+
+  document.getElementById('stat-reduction').textContent = '-' + r.reductionPct + '%';
+  document.getElementById('stat-duration').innerHTML =
+    formatTime(m.duration).replace('s', '') + ' <span class="text-sm font-normal text-slate-400">(Full HD)</span>';
+  document.getElementById('stat-resolution').textContent =
+    q === '1080p' ? '1080 x 1920' : '720 x 1280';
+}
+
+// ─── Success Actions ───────────────────────────────────────────
+function handleSendWhatsApp() {
+  const text = encodeURIComponent('Video Story HD siap dikirim! Dikompresi dengan WhatsApp Story HD – kualitas terbaik tanpa pecah.');
+  const url = 'https://wa.me/?text=' + text;
+  window.open(url, '_blank');
+  showToast('Membuka WhatsApp...', 'success');
+}
+
+function handleDownload() {
+  // Use real file if available, else show informational toast
+  if (state.fileMeta.objectUrl && state.selectedFile) {
+    const a = document.createElement('a');
+    a.href = state.fileMeta.objectUrl;
+    a.download = 'compressed_' + state.fileMeta.name;
+    a.click();
+    showToast('Mengunduh file video...', 'success');
+  } else {
+    showToast('Demo mode: file simulasi tidak dapat diunduh.', '');
+  }
+}
+
+function handleCompressAnother() {
+  // Revoke previous object URL to free memory
+  if (state.fileMeta.objectUrl && state.selectedFile) {
+    URL.revokeObjectURL(state.fileMeta.objectUrl);
+  }
+  // Reset file state
+  state.selectedFile = null;
+  state.fileMeta = {
+    name: 'cinematic_travel_vlog.mp4',
+    size: 45.8, duration: 28,
+    width: 1080, height: 1920,
+    objectUrl: null,
+  };
+  document.getElementById('file-input').value = '';
+  document.getElementById('preview-thumb').src = 'https://lh3.googleusercontent.com/aida-public/AB6AXuC9QXVhQPlmlkfinfvWEA3ZA0_jpxHJlJwkEAMc_jtkA5LXSux7_C2dmrKDMzXxoPkylN2R-2UNq_EkMkOcM7v_ADgJjeKzfgQK1GUq07PTEWRuo2rjclNZrCB9QyquDtKAwgf7F9LS4y_wGGPatj9Irw9S5O892uosQB4FTXZftlcBAmROrmxa-fOdOESipqyY6VfgE6pA3Rl7IB5z477QXjZzyIKUF_WUTdrx4knYqS0Wt-DqPbYoRZ1zgxVfpw9sGZ1O_VmAM8k';
+  updatePreviewPanel();
+  showScreen('upload');
+}
+
+// ─── Auto-send toggle ──────────────────────────────────────────
+document.getElementById('auto-send-toggle').addEventListener('change', function () {
+  state.autoSend = this.checked;
+});
+
+// ─── Init ──────────────────────────────────────────────────────
+// Check initial online state; if offline skip right to offline screen on start button
+// (we don't auto-redirect on load to give a nice splash first)
+</script>
+</body>
+</html>
