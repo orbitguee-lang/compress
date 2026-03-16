@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WhatsApp Story HD - Kompresi Cerdas</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#ff6933",
+          "primary-hover": "#ff8559",
+          "background-dark": "#23140f",
+        },
+        fontFamily: { "display": ["Inter", "sans-serif"] },
+      },
+    },
+  }
+</script>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:'Inter',sans-serif}
+
+  /* Satu layar aktif dalam satu waktu */
+  .screen{display:none}
+  .screen.active{display:flex}
+
+  .glow-orange{box-shadow:0 0 24px rgba(255,105,51,.4)}
+  .glow-orange:hover{box-shadow:0 0 38px rgba(255,105,51,.6)}
+  .glow-success{box-shadow:0 0 40px rgba(255,105,51,.45)}
+
+  .particle-overlay{
+    background-image:radial-gradient(circle at 50% 50%,rgba(255,105,51,.06) 0%,transparent 70%);
+  }
+
+  /* Border putus-putus SVG — lebih smooth dari CSS outline dashed biasa */
+  .dashed-border{
+    background-image:url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='12' ry='12' stroke='%23ff6933' stroke-width='3' stroke-dasharray='12%2c10' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+    border-radius:12px;
+  }
+
+  .inner-shadow-btn{
+    box-shadow:inset 0 2px 4px rgba(255,255,255,.22),0 8px 32px rgba(255,105,51,.4);
+  }
+
+  /* SVG ring progress — animasi transisi saat stroke-dashoffset diubah JS */
+  .ring-circle{
+    transition:stroke-dashoffset .55s cubic-bezier(.4,0,.2,1);
+    transform:rotate(-90deg);
+    transform-origin:50% 50%;
+  }
+
+  .confetti-bg{
+    background:radial-gradient(circle at 50% 30%,rgba(255,105,51,.18) 0%,rgba(35,20,15,0) 65%);
+  }
+
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+  .anim-fadeInUp{animation:fadeInUp .5s ease forwards}
+  .anim-fadeIn{animation:fadeIn .4s ease forwards}
+  .anim-popIn{animation:popIn .5s cubic-bezier(.34,1.56,.64,1) forwards}
+  .anim-spin{animation:spin 1.3s linear infinite;display:inline-block}
+  .anim-pulse{animation:pulse 1.8s ease-in-out infinite}
+
+  /* Toast notifikasi dari bawah */
+  #toast{
+    position:fixed;bottom:24px;left:50%;
+    transform:translateX(-50%) translateY(80px);
+    background:#1e293b;color:#fff;
+    padding:12px 24px;border-radius:12px;
+    font-size:.875rem;font-weight:600;z-index:9999;
+    transition:transform .3s ease,opacity .3s ease;opacity:0;
+    border:1px solid rgba(255,105,51,.3);max-width:90vw;text-align:center;
+  }
+  #toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  #toast.error{border-color:rgba(239,68,68,.5);background:#450a0a}
+  #toast.success{border-color:rgba(34,197,94,.5);background:#052e16}
+  #toast.info{border-color:rgba(59,130,246,.5);background:#0f2040}
+
+  /* Toggle switch kustom */
+  .tog-track{
+    width:44px;height:24px;background:#334155;
+    border-radius:9999px;transition:background .2s;
+    position:relative;cursor:pointer;flex-shrink:0;
+  }
+  .tog-track.on{background:#ff6933}
+  .tog-thumb{
+    position:absolute;top:2px;left:2px;
+    width:20px;height:20px;background:#fff;
+    border-radius:9999px;transition:transform .2s;pointer-events:none;
+  }
+  .tog-track.on .tog-thumb{transform:translateX(20px)}
+
+  /* Kartu kualitas — highlight saat terpilih */
+  .q-card.sel .q-inner{border-color:#ff6933!important;background:rgba(255,105,51,.1)!important}
+
+  /* Bar kompresi animasi smooth */
+  #comp-bar{transition:width .4s ease}
+
+  /* Drop zone saat file sudah dipilih */
+  #drop-zone.filled{background:rgba(255,105,51,.12)!important}
+
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-thumb{background:rgba(255,105,51,.3);border-radius:3px}
+
+  .robot-wrap:hover .robot-img{transform:scale(1.06)}
+  .robot-img{transition:transform .4s ease}
+
+  /* Kotak informasi warning proses real-time */
+  .info-box{
+    background:rgba(59,130,246,.08);
+    border:1px solid rgba(59,130,246,.25);
+    border-radius:12px;padding:12px 16px;
+    display:flex;align-items:flex-start;gap:10px;
+  }
+</style>
+</head>
+<body class="bg-[#23140f] font-display text-slate-100 min-h-screen overflow-x-hidden">
+
+<!--
+  ╔═══════════════════════════════════════════════════════════╗
+  ║  LAYAR 1 — SPLASH SCREEN                                 ║
+  ╚═══════════════════════════════════════════════════════════╝
+-->
+<div id="sc-splash" class="screen active flex-col min-h-screen w-full relative overflow-hidden">
+  <!-- Blob cahaya latar -->
+  <div class="absolute inset-0 pointer-events-none z-0">
+    <div class="absolute top-[-12%] left-[-8%] w-[45%] h-[45%] bg-primary/10 rounded-full blur-[130px] opacity-60"></div>
+    <div class="absolute bottom-[-15%] right-[-10%] w-[55%] h-[55%] bg-primary/20 rounded-full blur-[160px] opacity-50"></div>
+    <div class="absolute inset-0 particle-overlay"></div>
+  </div>
+
+  <header class="relative z-10 w-full px-6 py-5 flex items-center max-w-7xl mx-auto">
+    <div class="flex items-center gap-3">
+      <div class="bg-gradient-to-br from-amber-400 to-primary p-2.5 rounded-xl shadow-lg">
+        <span class="material-symbols-outlined text-white" style="font-size:26px">hd</span>
+      </div>
+      <h2 class="text-lg font-bold tracking-tight">WhatsApp Story HD</h2>
+    </div>
+  </header>
+
+  <main class="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 py-8">
+    <!-- Orb ikon -->
+    <div class="mb-8 relative">
+      <div class="absolute inset-0 bg-primary blur-3xl opacity-20 scale-150 rounded-full"></div>
+      <div class="relative w-36 h-36 md:w-52 md:h-52 rounded-3xl bg-gradient-to-tr from-amber-500 via-primary to-orange-600 flex items-center justify-center shadow-2xl p-0.5">
+        <div class="w-full h-full rounded-[22px] bg-[#23140f] flex items-center justify-center">
+          <span class="material-symbols-outlined" style="font-size:72px;background:linear-gradient(135deg,#fcd34d,#ff6933);-webkit-background-clip:text;background-clip:text;color:transparent">photo_library</span>
+        </div>
+      </div>
+    </div>
+
+    <h1 class="text-4xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight text-white mb-5 anim-fadeInUp">
+      Kompresi Cerdas,<br/>
+      <span class="text-primary">Kualitas Maksimal</span>
+    </h1>
+    <p class="text-base md:text-lg text-primary/70 max-w-xl mb-10 font-medium anim-fadeIn"
+       style="animation-delay:.2s;opacity:0;animation-fill-mode:forwards">
+      Dari ratusan MB menjadi belasan MB — tanpa server, tanpa upload.<br/>
+      Semua terjadi langsung di browser Anda menggunakan API bawaan browser.
+    </p>
+
+    <div class="w-full max-w-xs anim-fadeIn" style="animation-delay:.35s;opacity:0;animation-fill-mode:forwards">
+      <button onclick="startApp()"
+        class="group flex w-full h-16 items-center justify-center gap-2 rounded-xl bg-primary text-white text-lg font-bold glow-orange hover:bg-primary-hover transition-all duration-300 active:scale-95">
+        Mulai Sekarang
+        <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+      </button>
+    </div>
+  </main>
+
+  <footer class="relative z-10 pb-10 px-6 flex flex-col items-center gap-3">
+    <p class="text-xs font-semibold tracking-[.18em] uppercase text-primary/55">Menggunakan MediaRecorder API Bawaan Browser</p>
+    <div class="hidden md:block absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-4xl pointer-events-none">
+      <div class="h-28 bg-gradient-to-t from-primary/20 to-transparent blur-2xl rounded-t-full"></div>
+    </div>
+  </footer>
+</div>
+
+<!--
+  ╔═══════════════════════════════════════════════════════════╗
+  ║  LAYAR 2 — OFFLINE                                       ║
+  ╚═══════════════════════════════════════════════════════════╝
+-->
+<div id="sc-offline" class="screen flex-col min-h-screen w-full">
+  <header class="flex items-center justify-between border-b border-primary/20 px-6 py-4 md:px-20">
+    <div class="flex items-center gap-3">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
+        <span class="material-symbols-outlined" style="font-size:22px">hd</span>
+      </div>
+      <h2 class="text-xl font-bold">WhatsApp Story HD</h2>
+    </div>
+    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+      <span class="material-symbols-outlined">wifi_off</span>
+    </div>
+  </header>
+  <main class="flex flex-1 flex-col items-center justify-center px-6 py-16">
+    <div class="flex max-w-md flex-col items-center text-center">
+      <div class="robot-wrap mb-8 flex h-64 w-64 items-center justify-center rounded-full bg-primary/5">
+        <div class="robot-img h-52 w-52 bg-center bg-no-repeat bg-contain"
+          style="background-image:url('https://lh3.googleusercontent.com/aida-public/AB6AXuBfXpA7p28VFJuAtFxn07gJ9jVThEYFBhMN5dXUWeY15az-gkWLnxnYjTU4jXRJg_f-vx4IJPa9gLmKsoqUtFlYKimEvDqhKQB_uk2SiPx1RXzG85MC3BYwNaqhKnzbfMxVMogx9pEektWlly61BUFP6d02XajM_VDBpKq1M-NzV5CpcDUJKjT4yW29G3u3TLmw4583vtlOjrht0QOopDGrrjU2aG0sYsBZSiSTAWS4kKBgn7aMCPiyq8olcCyf-jOYbIAb8HL2WU0')">
+        </div>
+      </div>
+      <h1 class="mb-4 text-3xl md:text-4xl font-extrabold">Ups! Koneksi Terputus</h1>
+      <p class="mb-10 text-base leading-relaxed text-slate-400">
+        Sepertinya Anda sedang offline. Periksa koneksi internet Anda untuk melanjutkan.
+      </p>
+      <button onclick="retryOnline()"
+        class="group flex w-full max-w-xs items-center justify-center gap-2 rounded-xl bg-primary px-8 py-4 text-white font-bold hover:bg-primary-hover active:scale-95 transition-all">
+        <span class="material-symbols-outlined group-hover:rotate-180 transition-transform duration-500">refresh</span>
+        Coba Lagi
+      </button>
+    </div>
+  </main>
+</div>
+
+<!--
+  ╔═══════════════════════════════════════════════════════════╗
+  ║  LAYAR 3 — UPLOAD                                        ║
+  ╚═══════════════════════════════════════════════════════════╝
+-->
+<div id="sc-upload" class="screen flex-col min-h-screen w-full">
+  <header class="flex items-center justify-between border-b border-primary/20 px-6 py-4 lg:px-20">
+    <div class="flex items-center gap-4">
+      <div class="size-8 text-primary">
+        <svg fill="none" viewBox="0 0 48 48"><path clip-rule="evenodd" d="M24 18.4228L42 11.475V34.3663C42 34.7796 41.7457 35.1504 41.3601 35.2992L24 42V18.4228Z" fill="currentColor" fill-rule="evenodd"/><path clip-rule="evenodd" d="M24 8.18819L33.4123 11.574L24 15.2071L14.5877 11.574L24 8.18819ZM9 15.8487L21 20.4805V37.6263L9 32.9945V15.8487ZM27 37.6263V20.4805L39 15.8487V32.9945L27 37.6263ZM25.354 2.29885C24.4788 1.98402 23.5212 1.98402 22.646 2.29885L4.98454 8.65208C3.7939 9.08038 3 10.2097 3 11.475V34.3663C3 36.0196 4.01719 37.5026 5.55962 38.098L22.9197 44.7987C23.6149 45.0671 24.3851 45.0671 25.0803 44.7987L42.4404 38.098C43.9828 37.5026 45 36.0196 45 34.3663V11.475C45 10.2097 44.2061 9.08038 43.0155 8.65208L25.354 2.29885Z" fill="currentColor" fill-rule="evenodd"/></svg>
+      </div>
+      <h2 class="text-xl font-bold">WhatsApp Story <span class="text-primary">HD</span></h2>
+    </div>
+    <div class="hidden md:flex flex-col items-end">
+      <span class="text-sm font-bold">Premium User</span>
+      <span class="text-xs text-primary">Pro Active</span>
+    </div>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center p-6 lg:p-10 max-w-[1200px] mx-auto w-full gap-8">
+    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+      <!-- Kiri: Drop zone + info -->
+      <div class="lg:col-span-7 flex flex-col gap-5">
+        <!-- Drop zone -->
+        <div id="drop-zone"
+          class="dashed-border relative cursor-pointer flex flex-col items-center justify-center p-10 bg-primary/5 hover:bg-primary/10 transition-all min-h-[360px]"
+          ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)"
+          onclick="document.getElementById('file-input').click()">
+          <div class="absolute inset-0 opacity-15 pointer-events-none rounded-xl"
+               style="background:radial-gradient(circle at center,#ff6933,transparent 70%)"></div>
+          <div class="relative flex flex-col items-center gap-5">
+            <div class="relative">
+              <div class="absolute -inset-4 bg-primary/25 blur-2xl rounded-full"></div>
+              <div class="relative bg-gradient-to-br from-primary to-[#ff8c66] p-5 rounded-full shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-white" style="font-size:50px">cloud_upload</span>
+              </div>
+            </div>
+            <div class="text-center">
+              <h3 id="dz-h" class="text-2xl font-bold mb-2">Upload Video Story</h3>
+              <p id="dz-p" class="text-slate-400 text-sm">Tarik & lepas video di sini, atau klik untuk memilih</p>
+            </div>
+            <button class="mt-1 px-8 py-3 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/30 pointer-events-none">
+              Pilih Video
+            </button>
+          </div>
+          <input id="file-input" type="file"
+            accept="video/mp4,video/quicktime,video/avi,video/webm,.mp4,.mov,.avi,.webm,.mkv"
+            class="hidden" onchange="onFileInput(event)"/>
+        </div>
+
+        <!-- Batas ukuran & durasi -->
+        <div class="bg-primary/10 border border-primary/30 rounded-xl p-4 flex items-start gap-3">
+          <span class="material-symbols-outlined text-primary" style="font-size:26px">warning</span>
+          <div>
+            <p class="text-primary font-bold text-sm">Batas Ukuran File: Minimum 5 MB - Maksimum 550 MB</p>
+            <p class="text-primary/75 text-xs mt-0.5">Batas Durasi Video: Minimum 3 Detik - Maksimum 60 Detik</p>
+          </div>
+        </div>
+
+        <!-- Info: proses real-time (penting untuk UX) -->
+        <div class="info-box">
+          <span class="material-symbols-outlined text-blue-400 shrink-0" style="font-size:20px">info</span>
+          <div class="text-xs text-slate-400 leading-relaxed">
+            <span class="font-semibold text-slate-300">Cara kerja:</span> Kompresi menggunakan MediaRecorder API bawaan browser (tanpa server, tanpa upload). Video diputar &amp; direkam ulang di memori dengan bitrate jauh lebih kecil.
+            <br/><span class="text-yellow-400 font-medium mt-1 block">⚠ Jangan tutup atau minimize tab selama proses berlangsung.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kanan: Preview + konfigurasi -->
+      <div class="lg:col-span-5 flex flex-col gap-5">
+        <!-- Kartu preview -->
+        <div class="bg-primary/5 border border-primary/20 rounded-xl overflow-hidden">
+          <div class="relative aspect-video bg-slate-800 overflow-hidden">
+            <img id="prev-thumb" class="w-full h-full object-cover" data-alt="preview"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9QXVhQPlmlkfinfvWEA3ZA0_jpxHJlJwkEAMc_jtkA5LXSux7_C2dmrKDMzXxoPkylN2R-2UNq_EkMkOcM7v_ADgJjeKzfgQK1GUq07PTEWRuo2rjclNZrCB9QyquDtKAwgf7F9LS4y_wGGPatj9Irw9S5O892uosQB4FTXZftlcBAmROrmxa-fOdOESipqyY6VfgE6pA3Rl7IB5z477QXjZzyIKUF_WUTdrx4knYqS0Wt-DqPbYoRZ1zgxVfpw9sGZ1O_VmAM8k"/>
+            <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <span class="material-symbols-outlined text-white" style="font-size:44px">play_circle</span>
+            </div>
+            <div class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest">Preview</div>
+          </div>
+          <div class="p-4 space-y-3">
+            <div class="flex justify-between items-start">
+              <h4 id="meta-name" class="font-bold truncate max-w-[200px] text-sm">Pilih file video...</h4>
+              <span class="text-primary text-xs font-bold px-2 py-0.5 bg-primary/10 rounded">Source</span>
+            </div>
+            <div class="grid grid-cols-2 gap-y-1.5 text-xs text-slate-400">
+              <div class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined" style="font-size:14px">attachment</span>
+                <span id="meta-size">-- MB</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined" style="font-size:14px">schedule</span>
+                <span id="meta-dur">--:--</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined" style="font-size:14px">aspect_ratio</span>
+                <span id="meta-res">-- x --</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined" style="font-size:14px">high_quality</span>
+                <span id="meta-codec">MediaRecorder</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pilihan kualitas output -->
+        <div class="space-y-3">
+          <h3 class="font-bold flex items-center gap-2 text-sm">
+            <span class="material-symbols-outlined text-primary" style="font-size:18px">tune</span>
+            Pilih Kualitas Output
+          </h3>
+          <!-- 1080p -->
+          <div class="q-card sel relative" data-q="1080p" onclick="pickQuality('1080p',this)">
+            <div class="absolute -right-2 -top-2 z-10 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">RECOMMENDED</div>
+            <div class="q-inner p-4 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="bg-primary p-2 rounded-lg text-white shrink-0">
+                  <span class="material-symbols-outlined" style="font-size:18px">hd</span>
+                </div>
+                <div>
+                  <p class="font-bold text-sm">1080p HD</p>
+                  <p class="text-xs text-slate-400">1.5 Mbps · ~11 MB / menit</p>
+                </div>
+              </div>
+              <span id="chk-1080" class="material-symbols-outlined text-primary">check_circle</span>
+            </div>
+          </div>
+          <!-- 720p -->
+          <div class="q-card relative" data-q="720p" onclick="pickQuality('720p',this)">
+            <div class="q-inner p-4 rounded-xl border border-primary/20 bg-transparent hover:border-primary/50 transition-colors flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="bg-slate-800 p-2 rounded-lg text-slate-400 shrink-0">
+                  <span class="material-symbols-outlined" style="font-size:18px">high_quality</span>
+                </div>
+                <div>
+                  <p class="font-bold text-sm">720p HD</p>
+                  <p class="text-xs text-slate-400">0.8 Mbps · ~6 MB / menit</p>
+                </div>
+              </div>
+              <div id="chk-720" class="size-5 border-2 border-slate-700 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toggle auto-kirim -->
+        <div class="bg-primary/5 p-4 rounded-xl border border-primary/10 flex items-center justify-between gap-4">
+          <div>
+            <p class="font-bold text-sm">Langsung Kirim ke WhatsApp</p>
+            <p class="text-xs text-slate-500">Buka WhatsApp otomatis setelah selesai</p>
+          </div>
+          <div class="tog-track on" id="tog" onclick="toggleSend()">
+            <div class="tog-thumb"></div>
+          </div>
+        </div>
+
+        <!-- Tombol kompres -->
+        <button onclick="doCompress()"
+          class="w-full py-5 rounded-xl bg-gradient-to-r from-primary to-[#ff8c66] text-white font-bold text-lg inner-shadow-btn hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+          <span class="material-symbols-outlined">auto_fix_high</span>
+          Kompres Sekarang
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistik kecil di footer -->
+    <div class="w-full flex flex-wrap justify-center gap-10 py-6 border-t border-primary/10 opacity-55">
+      <div class="flex flex-col items-center">
+        <span class="text-xl font-bold">Browser</span>
+        <span class="text-xs uppercase tracking-widest text-slate-400">Native Engine</span>
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="text-xl font-bold">0 Upload</span>
+        <span class="text-xs uppercase tracking-widest text-slate-400">Privasi Terjaga</span>
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="text-xl font-bold">H.264</span>
+        <span class="text-xs uppercase tracking-widest text-slate-400">Output Codec</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!--
+  ╔═══════════════════════════════════════════════════════════╗
+  ║  LAYAR 4 — PROGRESS KOMPRESI                             ║
+  ╚═══════════════════════════════════════════════════════════╝
+-->
+<div id="sc-progress" class="screen flex-col min-h-screen w-full">
+  <header class="flex items-center justify-between border-b border-primary/10 px-6 py-4">
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-primary" style="font-size:28px">hd</span>
+      <h2 class="text-lg font-bold">WhatsApp Story HD</h2>
+    </div>
+    <!-- Badge format output — diupdate JS setelah MediaRecorder siap -->
+    <div id="fmt-badge" class="hidden items-center gap-1.5 text-xs text-primary/70 bg-primary/10 px-3 py-1.5 rounded-full">
+      <span class="material-symbols-outlined" style="font-size:13px">videocam</span>
+      <span id="fmt-label">--</span>
+    </div>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center justify-center px-6 py-8 max-w-[560px] mx-auto w-full">
+
+    <!--
+      SVG Ring Progress
+      Circumference = 2π × r = 2 × 3.14159 × 108 ≈ 678.58
+      stroke-dashoffset diubah JS: offset = 678.58 × (1 - pct/100)
+    -->
+    <div class="relative flex items-center justify-center mb-10">
+      <svg class="w-56 h-56" viewBox="0 0 256 256">
+        <circle cx="128" cy="128" r="108" fill="none" stroke="rgba(255,105,51,.12)" stroke-width="10"/>
+        <circle id="ring" class="ring-circle" cx="128" cy="128" r="108" fill="none"
+          stroke="#ff6933" stroke-width="10" stroke-linecap="round"
+          stroke-dasharray="678.58" stroke-dashoffset="678.58"/>
+      </svg>
+      <div class="absolute flex flex-col items-center">
+        <span id="pct-text" class="text-5xl font-black text-primary">0%</span>
+        <span class="text-xs font-semibold text-primary/55 mt-1 uppercase tracking-widest">Compressing</span>
+      </div>
+    </div>
+
+    <!-- Status teks + countdown -->
+    <div class="w-full text-center space-y-2 mb-10">
+      <p id="status-text" class="text-xl font-semibold anim-pulse">Menyiapkan encoder...</p>
+      <div class="flex items-center justify-center gap-2 text-primary/75">
+        <span class="material-symbols-outlined text-base">timer</span>
+        <span id="time-text" class="text-sm font-medium">Estimasi: menghitung...</span>
+      </div>
+    </div>
+
+    <!-- Log tahap teknis -->
+    <div class="w-full bg-primary/5 rounded-xl p-4 border border-primary/10 mb-8 space-y-3">
+      <div id="log1" class="flex items-center gap-3 opacity-35">
+        <span class="material-symbols-outlined text-green-400" style="font-size:17px">check_circle</span>
+        <p class="text-sm">Validasi &amp; baca metadata file...</p>
+      </div>
+      <div id="log2" class="flex items-center gap-3">
+        <span id="log2i" class="material-symbols-outlined text-primary anim-spin" style="font-size:17px">sync</span>
+        <p id="log2t" class="text-sm font-medium">Menyiapkan canvas &amp; encoder...</p>
+      </div>
+      <div id="log3" class="hidden flex items-center gap-3">
+        <span id="log3i" class="material-symbols-outlined text-primary anim-spin" style="font-size:17px">sync</span>
+        <p id="log3t" class="text-sm font-medium">Merekam frame video...</p>
+      </div>
+      <div id="log4" class="hidden flex items-center gap-3">
+        <span id="log4i" class="material-symbols-outlined text-primary anim-spin" style="font-size:17px">sync</span>
+        <p id="log4t" class="text-sm font-medium">Memfinalisasi file output...</p>
+      </div>
+    </div>
+
+    <!-- Perbandingan ukuran file -->
+    <div class="w-full space-y-3 mb-10">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-primary/55">Perbandingan Ukuran</h3>
+      <div>
+        <div class="flex justify-between text-xs font-medium mb-1">
+          <span>Original</span><span id="orig-lbl">-- MB</span>
+        </div>
+        <div class="h-3 w-full bg-slate-700/50 rounded-full overflow-hidden">
+          <div class="h-full bg-slate-500 rounded-full w-full"></div>
+        </div>
+      </div>
+      <div>
+        <div class="flex justify-between text-xs font-medium mb-1">
+          <span class="text-primary">Hasil Kompresi</span>
+          <span id="comp-lbl" class="text-primary">~menghitung...</span>
+        </div>
+        <div class="h-3 w-full bg-primary/10 rounded-full overflow-hidden">
+          <div id="comp-bar" class="h-full bg-primary rounded-full glow-orange" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tombol batal -->
+    <button onclick="cancelCompress()"
+      class="w-full py-4 rounded-xl border border-primary/25 text-primary font-bold hover:bg-primary/5 transition-all flex items-center justify-center gap-2">
+      <span class="material-symbols-outlined">close</span>
+      Batalkan
+    </button>
+  </main>
+
+  <footer class="p-5 text-center">
+    <p class="text-[10px] text-slate-700 uppercase tracking-[.18em]">MediaRecorder API · Tanpa Server · 100% Lokal</p>
+  </footer>
+</div>
+
+<!--
+  ╔═══════════════════════════════════════════════════════════╗
+  ║  LAYAR 5 — SUKSES                                        ║
+  ╚═══════════════════════════════════════════════════════════╝
+-->
+<div id="sc-success" class="screen flex-col min-h-screen w-full">
+  <header class="flex items-center border-b border-primary/20 px-6 py-4 md:px-40 bg-[#23140f]/60 backdrop-blur-md sticky top-0 z-50">
+    <div class="flex items-center gap-3">
+      <div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+        <span class="material-symbols-outlined" style="font-size:20px">hd</span>
+      </div>
+      <h2 class="text-lg font-bold">WhatsApp Story HD</h2>
+    </div>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center px-4 py-10 md:px-12">
+    <!-- Header sukses -->
+    <div class="relative w-full max-w-2xl text-center mb-8">
+      <div class="absolute inset-0 confetti-bg -z-10 scale-150"></div>
+      <div class="mb-5 flex justify-center">
+        <div class="size-24 bg-primary rounded-full flex items-center justify-center glow-success anim-popIn">
+          <span class="material-symbols-outlined text-white" style="font-size:52px;font-variation-settings:'wght' 700">check</span>
+        </div>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-extrabold mb-3 tracking-tight">Kompresi Berhasil!</h1>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm font-semibold mb-4">
+        <span class="material-symbols-outlined" style="font-size:14px">verified</span>
+        Siap Dikirim &amp; Diunduh
+      </div>
+      <p class="text-slate-400 max-w-sm mx-auto text-sm">
+        Video dikompres menggunakan MediaRecorder API — seluruhnya di browser Anda, tidak ada yang dikirim ke server.
+      </p>
+    </div>
+
+    <!-- Preview + Statistik -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mb-10">
+      <!-- Video preview -->
+      <div class="relative group flex justify-center">
+        <div class="absolute -inset-1 bg-primary/30 rounded-xl blur-xl group-hover:bg-primary/50 transition-all"></div>
+        <div class="relative w-full max-w-[250px] aspect-[9/16] bg-slate-800 rounded-xl overflow-hidden shadow-2xl border-4 border-[#23140f]">
+          <div class="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-all z-10">
+            <span class="material-symbols-outlined text-white group-hover:scale-110 transition-transform cursor-pointer" style="font-size:54px;opacity:.85">play_circle</span>
+          </div>
+          <img id="succ-thumb" class="w-full h-full object-cover"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAKcVCjuzYANXunSRv45D3DIXwv8XnFYn_9iSqPrIoy-JA315hvGRL2jxSlOV44H3yGbyMfqrNUPoqu-4cQHvZfU6X09qukMJkVJ5RPWeotzNsDrFeUjyR29iDs0UoIKaXyyb9un-6tWmpTrQwRqM_ZlkfpkdMy423IcI-JOb8AjoDRoG_JY99NkE0_AH4Fxy7Pp_8Q48iUfzHZBe_s-BBZi76i12YI_eKRtr1XDGUrHODhtD_wksXTEyRMJDhmTaIvtQmvlhWZEg"
+            alt="Preview"/>
+        </div>
+      </div>
+
+      <!-- Statistik -->
+      <div class="flex flex-col justify-center gap-4">
+        <div class="grid grid-cols-1 gap-3">
+          <div class="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-primary/10">
+            <div class="size-12 rounded-lg bg-primary/20 flex items-center justify-center text-primary shrink-0">
+              <span class="material-symbols-outlined">auto_graph</span>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Reduksi Ukuran</p>
+              <p id="st-red" class="text-2xl font-extrabold text-primary">--%</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-primary/10">
+            <div class="size-12 rounded-lg bg-primary/20 flex items-center justify-center text-primary shrink-0">
+              <span class="material-symbols-outlined">schedule</span>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Durasi</p>
+              <p id="st-dur" class="text-xl font-bold">--:--</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-primary/10">
+            <div class="size-12 rounded-lg bg-primary/20 flex items-center justify-center text-primary shrink-0">
+              <span class="material-symbols-outlined">high_quality</span>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Ukuran Hasil</p>
+              <p id="st-size" class="text-xl font-bold">-- MB</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tujuan kirim -->
+        <div class="p-4 rounded-xl bg-primary/5 border border-dashed border-primary/30 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="size-10 rounded-full bg-slate-700 flex items-center justify-center">
+              <span class="material-symbols-outlined text-slate-400" style="font-size:20px">person</span>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500">Kirim ke:</p>
+              <p class="font-bold text-sm">My WhatsApp Story</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-primary">chat</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tombol aksi -->
+    <div class="w-full max-w-md space-y-4 mb-12">
+      <button onclick="sendWA()"
+        class="w-full h-14 bg-gradient-to-r from-[#ff6933] to-[#ff4d6d] text-white rounded-xl font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-primary/25 hover:opacity-90 active:scale-95 transition-all">
+        <span class="material-symbols-outlined">send</span>
+        Kirim ke WhatsApp Sekarang
+      </button>
+      <div class="grid grid-cols-2 gap-4">
+        <button onclick="dlFile()"
+          class="h-12 border-2 border-primary text-primary rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all active:scale-95">
+          <span class="material-symbols-outlined" style="font-size:20px">download</span>
+          Unduh File
+        </button>
+        <button onclick="compressAnother()"
+          class="h-12 border-2 border-primary text-primary rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all active:scale-95">
+          <span class="material-symbols-outlined" style="font-size:20px">add_box</span>
+          Kompres Lain
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="py-8 text-center text-slate-700 text-sm">
+    <p>© 2024 WhatsApp Story HD · MediaRecorder API · Zero Server</p>
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/*
+  ════════════════════════════════════════════════════════════════
+  CARA KERJA KOMPRESI (tanpa FFmpeg, tanpa library eksternal)
+  ════════════════════════════════════════════════════════════════
+
+  Tiga API bawaan browser yang digunakan:
+
+  1. HTMLVideoElement + createObjectURL
+     → Memutar video sumber langsung dari File object di memori.
+     → Tidak ada upload ke server, semua lokal.
+
+  2. HTMLCanvasElement + captureStream(fps)
+     → Canvas adalah "layer gambar" yang bisa diambil sebagai
+        video stream. Kita gambar setiap frame video ke canvas
+        dengan resolusi target (1080p atau 720p). Lalu canvas
+        "menyiarkan" framenya sebagai MediaStream.
+
+  3. MediaRecorder API
+     → Encoder video built-in di browser. Mengambil MediaStream
+        dari canvas dan mengompresi dengan codec yang diatur
+        browser (biasanya H.264 pada Chrome mobile/Edge/Safari,
+        VP8/VP9 pada Chrome desktop).
+     → videoBitsPerSecond = 1_500_000 (1.5 Mbps untuk 1080p)
+        → 60 detik = 1.5 Mbps × 60s / 8 = ~11.25 MB
+        → Dari ratusan MB menjadi ~11 MB ✓
+
+  4. AudioContext + createMediaElementSource
+     → Menangkap audio dari video sumber tanpa membunyikannya
+        ke speaker. Dirouting ke MediaStreamDestination yang
+        dimasukkan ke MediaRecorder.
+
+  KETERBATASAN:
+  - Proses berjalan real-time (30 detik video = ~30 detik proses)
+  - Output format tergantung browser: WebM (Chrome desktop) /
+    MP4 H.264 (Chrome Android, Edge, Safari). Keduanya bisa
+    diputar di WhatsApp.
+  - Tab tidak boleh di-minimize (rAF berhenti = frame hilang)
+  ════════════════════════════════════════════════════════════════
+*/
+
+// ──────────────────────────────────────────────────────────────
+// STATE GLOBAL
+// ──────────────────────────────────────────────────────────────
+const S = {
+  file      : null,   // File object asli
+  quality   : '1080p',
+  autoSend  : true,
+  cancelled : false,
+  meta: { name:'', sizeMB:0, dur:0, w:0, h:0 },
+  out : { blob:null, mime:'', sizeMB:0, redPct:0 },
+  _prevUrl  : null,   // object URL untuk thumbnail preview
+  _cdTimer  : null,   // interval ID untuk countdown
+  _recorder : null,   // MediaRecorder aktif
+  _raf      : null,   // requestAnimationFrame ID aktif
+  _vidEl    : null,   // video element tersembunyi saat encoding
+  _audioCtx : null,   // AudioContext saat encoding
+};
+
+// ──────────────────────────────────────────────────────────────
+// NAVIGASI LAYAR
+// ──────────────────────────────────────────────────────────────
+function go(id) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById('sc-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ──────────────────────────────────────────────────────────────
+// KONEKSI INTERNET
+// ──────────────────────────────────────────────────────────────
+window.addEventListener('offline', () => { go('offline'); toast('Koneksi terputus.', 'error'); });
+window.addEventListener('online',  () => toast('Koneksi tersambung!', 'success'));
+
+function startApp()   { navigator.onLine ? go('upload') : go('offline'); }
+function retryOnline(){ navigator.onLine ? go('upload') : toast('Masih offline.', 'error'); }
+
+// ──────────────────────────────────────────────────────────────
+// TOAST
+// ──────────────────────────────────────────────────────────────
+function toast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.className = '', 3800);
+}
+
+// ──────────────────────────────────────────────────────────────
+// DRAG & DROP
+// ──────────────────────────────────────────────────────────────
+function dzOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('bg-primary/20'); }
+function dzLeave()  { document.getElementById('drop-zone').classList.remove('bg-primary/20'); }
+function dzDrop(e)  { e.preventDefault(); dzLeave(); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); }
+function onFileInput(e) { if (e.target.files[0]) loadFile(e.target.files[0]); }
+
+// ──────────────────────────────────────────────────────────────
+// VALIDASI & BACA METADATA FILE
+// ──────────────────────────────────────────────────────────────
+function loadFile(file) {
+  const okExt  = /\.(mp4|mov|avi|webm|mkv|m4v)$/i.test(file.name);
+  const okMime = /^video\//i.test(file.type);
+  if (!okExt && !okMime) { toast('Format tidak didukung. Gunakan MP4, MOV, AVI, atau WebM.', 'error'); return; }
+
+  const mb = file.size / 1048576;
+  if (mb < 5)   { toast(`File terlalu kecil (${mb.toFixed(1)} MB). Min 5 MB.`, 'error'); return; }
+  if (mb > 550) { toast(`File terlalu besar (${mb.toFixed(1)} MB). Max 550 MB.`, 'error'); return; }
+
+  // Baca durasi & resolusi asli via HTMLVideoElement
+  const url = URL.createObjectURL(file);
+  const v   = document.createElement('video');
+  v.preload = 'metadata';
+  v.src     = url;
+
+  v.onloadedmetadata = () => {
+    const dur = Math.floor(v.duration || 0);
+    URL.revokeObjectURL(url);
+
+    if (dur > 0 && dur < 3)  { toast('Durasi terlalu pendek. Min 3 detik.', 'error'); return; }
+    if (dur > 60)             { toast('Durasi terlalu panjang. Max 60 detik.', 'error'); return; }
+
+    applyFileMeta(file, mb, dur, v.videoWidth || 1920, v.videoHeight || 1080);
+  };
+  v.onerror = () => {
+    URL.revokeObjectURL(url);
+    // Fallback: metadata tidak terbaca, tetap terima file
+    applyFileMeta(file, mb, 30, 1920, 1080);
+    toast('File diterima (metadata tidak terbaca otomatis).', '');
+  };
+}
+
+function applyFileMeta(file, mb, dur, w, h) {
+  // Bebaskan object URL lama jika ada
+  if (S._prevUrl) URL.revokeObjectURL(S._prevUrl);
+
+  S.file = file;
+  S.meta = { name: file.name, sizeMB: parseFloat(mb.toFixed(1)), dur, w, h };
+
+  // Update panel preview
+  document.getElementById('meta-name').textContent = file.name;
+  document.getElementById('meta-size').textContent = S.meta.sizeMB + ' MB';
+  document.getElementById('meta-dur').textContent  = fmtTime(dur);
+  document.getElementById('meta-res').textContent  = w + ' × ' + h;
+
+  // Tampilkan frame awal video sebagai thumbnail
+  S._prevUrl = URL.createObjectURL(file);
+  document.getElementById('prev-thumb').src = S._prevUrl;
+
+  // Update tampilan drop zone
+  document.getElementById('dz-h').textContent = '✓ Video Siap Dikompres';
+  document.getElementById('dz-p').textContent = file.name + ' · ' + S.meta.sizeMB + ' MB';
+  document.getElementById('drop-zone').classList.add('filled');
+
+  toast('Video dimuat! Pilih kualitas lalu Kompres.', 'success');
+}
+
+function fmtTime(s) {
+  if (!s) return '--:--';
+  return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+}
+
+// ──────────────────────────────────────────────────────────────
+// PILIHAN KUALITAS
+// ──────────────────────────────────────────────────────────────
+function pickQuality(q, el) {
+  S.quality = q;
+  document.querySelectorAll('.q-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+
+  const c1 = document.getElementById('chk-1080');
+  const c2 = document.getElementById('chk-720');
+  if (q === '1080p') {
+    c1.className = 'material-symbols-outlined text-primary'; c1.textContent = 'check_circle';
+    c2.className = 'size-5 border-2 border-slate-700 rounded-full'; c2.textContent = '';
+  } else {
+    c2.className = 'material-symbols-outlined text-primary'; c2.textContent = 'check_circle';
+    c1.className = 'size-5 border-2 border-slate-700 rounded-full'; c1.textContent = '';
+  }
+}
+
+function toggleSend() {
+  S.autoSend = !S.autoSend;
+  document.getElementById('tog').classList.toggle('on', S.autoSend);
+}
+
+// ──────────────────────────────────────────────────────────────
+// KOMPRES — entry point utama kompresi real di browser
+// ──────────────────────────────────────────────────────────────
+async function doCompress() {
+  if (!S.file) { toast('Pilih file video terlebih dahulu!', 'error'); return; }
+
+  S.cancelled = false;
+  resetProgressUI();
+  document.getElementById('orig-lbl').textContent = S.meta.sizeMB + ' MB';
+
+  // Estimasi ukuran output (untuk tampilan awal bar)
+  const estMB   = parseFloat(((S.quality === '1080p' ? 1.5 : 0.8) * S.meta.dur / 8 + 0.96).toFixed(1));
+  const estRat  = Math.min(100, Math.round((estMB / S.meta.sizeMB) * 100));
+  document.getElementById('comp-lbl').textContent = '~' + estMB + ' MB (estimasi)';
+
+  go('progress');
+  startCd(Math.ceil(S.meta.dur * 1.05)); // estimasi waktu = durasi video × 1.05
+
+  try {
+    const result = await runCompressor(S.file, S.quality,
+      // onProgress(pct 0–100)
+      (pct) => {
+        setRing(pct);
+        document.getElementById('pct-text').textContent = pct + '%';
+        // Update bar kompresi secara bertahap menuju estimasi
+        const barW = Math.min(estRat, (pct / 100) * estRat * 1.1);
+        document.getElementById('comp-bar').style.width = barW + '%';
+      },
+      // onStatus(text)
+      (txt) => document.getElementById('status-text').textContent = txt
+    );
+
+    if (S.cancelled) return;
+
+    // Hitung statistik aktual dari Blob nyata
+    const realMB  = parseFloat((result.blob.size / 1048576).toFixed(1));
+    const realRed = Math.max(0, Math.round((1 - result.blob.size / S.file.size) * 100));
+
+    S.out = { blob: result.blob, mime: result.mime, sizeMB: realMB, redPct: realRed };
+
+    // Update bar dengan angka nyata
+    document.getElementById('comp-lbl').textContent = realMB + ' MB';
+    document.getElementById('comp-bar').style.width =
+      Math.min(100, (realMB / S.meta.sizeMB) * 100) + '%';
+
+    stopCd();
+    setRing(100);
+    document.getElementById('pct-text').textContent = '100%';
+    document.getElementById('status-text').textContent = 'Selesai! ✓';
+
+    setTimeout(() => {
+      buildSuccess();
+      go('success');
+      if (S.autoSend) setTimeout(sendWA, 1500);
+    }, 700);
+
+  } catch (err) {
+    stopCd();
+    if (!S.cancelled) {
+      toast('Kompresi gagal: ' + (err.message || 'error tidak diketahui'), 'error');
+      go('upload');
+    }
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// runCompressor — inti kompresi menggunakan tiga API browser:
+//   Canvas  → menggambar frame video pada resolusi target
+//   captureStream → mengambil canvas sebagai MediaStream 60fps
+//   MediaRecorder → mengenkode stream ke H.264/VP9 at target bitrate
+//   AudioContext → menangkap audio tanpa membunyikannya ke speaker
+// ──────────────────────────────────────────────────────────────
+function runCompressor(file, quality, onProgress, onStatus) {
+  return new Promise(async (resolve, reject) => {
+
+    // Konfigurasi berdasarkan pilihan kualitas
+    const CFG = {
+      '1080p': { maxW: 1920, maxH: 1080, vbps: 1_500_000, label: '1080p · 1.5 Mbps' },
+      '720p' : { maxW: 1280, maxH: 720,  vbps:   800_000, label: '720p · 0.8 Mbps'  },
+    }[quality];
+
+    // ── 1. Buat video element tersembunyi ─────────────────
+    const vid = document.createElement('video');
+    // Letakkan di luar viewport — visible=false tapi stream tetap aktif
+    vid.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;';
+    vid.playsInline = true;
+    // muted=true penting agar browser mengizinkan autoplay tanpa interaksi pengguna.
+    // Audio tetap ditangkap melalui AudioContext di bawah.
+    vid.muted  = true;
+    vid.volume = 0;
+    vid.src    = URL.createObjectURL(file);
+    document.body.appendChild(vid);
+    S._vidEl = vid;
+
+    // ── 2. Tunggu metadata siap ────────────────────────────
+    onStatus('Membaca video...');
+    try {
+      await new Promise((res, rej) => {
+        vid.onloadedmetadata = res;
+        vid.onerror = () => rej(new Error('Tidak dapat membaca video'));
+        setTimeout(() => rej(new Error('Timeout membaca metadata')), 20000);
+      });
+    } catch (e) { cleanup(); reject(e); return; }
+
+    // ── 3. Hitung dimensi canvas target ───────────────────
+    // Scale DOWN jika sumber lebih besar dari target.
+    // Jangan upscale — ini tidak meningkatkan kualitas hanya memboroskan bitrate.
+    const srcW = vid.videoWidth  || 1920;
+    const srcH = vid.videoHeight || 1080;
+    const ratio = srcW / srcH;
+    let cW, cH;
+
+    if (srcW <= CFG.maxW && srcH <= CFG.maxH) {
+      // Sumber lebih kecil dari target — pertahankan resolusi asli
+      cW = srcW; cH = srcH;
+    } else if (ratio > CFG.maxW / CFG.maxH) {
+      cW = CFG.maxW; cH = Math.round(cW / ratio);
+    } else {
+      cH = CFG.maxH; cW = Math.round(cH * ratio);
+    }
+
+    // H.264/VP9 butuh dimensi genap
+    cW -= cW % 2;
+    cH -= cH % 2;
+
+    const canvas = document.createElement('canvas');
+    canvas.width  = cW;
+    canvas.height = cH;
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    onStatus(`Canvas siap: ${cW}×${cH}...`);
+
+    // ── 4. Audio via AudioContext ──────────────────────────
+    // Kita routing audio dari video element ke MediaStreamDestination.
+    // Cara ini menangkap audio tanpa membunyikannya ke speaker.
+    let audioTracks = [];
+    try {
+      S._audioCtx = new AudioContext();
+      if (S._audioCtx.state === 'suspended') await S._audioCtx.resume();
+      const src  = S._audioCtx.createMediaElementSource(vid);
+      const dest = S._audioCtx.createMediaStreamDestination();
+      src.connect(dest);
+      // TIDAK connect ke S._audioCtx.destination → tidak bunyi ke speaker
+      audioTracks = dest.stream.getAudioTracks();
+    } catch (e) {
+      // Audio capture opsional — jika gagal, output tetap valid (tanpa audio)
+      console.warn('Audio capture tidak tersedia:', e.message);
+    }
+
+    // ── 5. Buat MediaStream gabungan (canvas video + audio) ─
+    // canvas.captureStream(fps) mengambil konten canvas sebagai stream video.
+    // Kita minta 60fps — browser akan capture setiap frame yang kita gambar.
+    const canvasStream = canvas.captureStream(60);
+    const combined     = new MediaStream([
+      ...canvasStream.getVideoTracks(),
+      ...audioTracks,
+    ]);
+
+    // ── 6. Cari MIME type terbaik yang didukung browser ────
+    // Urutan preferensi: MP4 H.264 (mobile/Edge/Safari) > WebM VP9 > WebM VP8
+    const MIMES = [
+      'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+      'video/mp4;codecs=avc1.64001F,mp4a.40.2',
+      'video/mp4;codecs=avc1',
+      'video/mp4',
+      'video/webm;codecs=h264,opus',
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm',
+    ];
+    const mime = MIMES.find(m => {
+      try { return MediaRecorder.isTypeSupported(m); } catch(e) { return false; }
+    }) || '';
+
+    // Tampilkan format yang akan digunakan di badge header
+    const fmtBadge = document.getElementById('fmt-badge');
+    const fmtLabel = document.getElementById('fmt-label');
+    if (mime) {
+      fmtLabel.textContent = mime.includes('mp4') ? 'MP4 H.264' : 'WebM VP9';
+      fmtBadge.classList.remove('hidden');
+      fmtBadge.style.display = 'flex';
+    }
+
+    // ── 7. Inisialisasi MediaRecorder ─────────────────────
+    let recorder;
+    try {
+      recorder = new MediaRecorder(combined, {
+        ...(mime ? { mimeType: mime } : {}),
+        videoBitsPerSecond: CFG.vbps,   // target bitrate video
+        audioBitsPerSecond: 128_000,     // 128 kbps audio
+      });
+    } catch (e) {
+      // Fallback absolut: biarkan browser memilih semua sendiri
+      try {
+        recorder = new MediaRecorder(combined, { videoBitsPerSecond: CFG.vbps });
+      } catch (e2) { cleanup(); reject(new Error('Browser tidak mendukung MediaRecorder: ' + e2.message)); return; }
+    }
+    S._recorder = recorder;
+
+    const chunks = [];
+    recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+    recorder.onerror = e => { cleanup(); reject(e.error || new Error('MediaRecorder error')); };
+
+    recorder.onstop = () => {
+      const outMime = recorder.mimeType || mime || 'video/webm';
+      const blob = new Blob(chunks, { type: outMime });
+      cleanup();
+      resolve({ blob, mime: outMime });
+    };
+
+    // ── 8. Loop gambar frame ke canvas ────────────────────
+    // requestAnimationFrame berjalan di ~60fps mengikuti refresh monitor.
+    // Kita gambar posisi current video ke canvas di setiap frame.
+    // captureStream(60) otomatis mengambil setiap perubahan canvas.
+    let firstDraw = true;
+    const drawLoop = () => {
+      if (S.cancelled) { cleanup(); reject(new Error('Dibatalkan')); return; }
+
+      if (!vid.ended && !vid.paused) {
+        // Gambar frame video ke canvas dengan resolusi target
+        ctx.drawImage(vid, 0, 0, cW, cH);
+
+        // Mulai recorder hanya setelah frame pertama tergambar
+        // (penting: recorder harus dimulai setelah ada data di canvas)
+        if (firstDraw && recorder.state === 'inactive') {
+          firstDraw = false;
+          recorder.start(300); // kumpulkan data tiap 300ms
+          logMark(2, true);
+          logMark(3, false, `Merekam ${cW}×${cH} @ ${CFG.vbps/1000}kbps...`);
+          onStatus(`Merekam ${cW}×${cH} @ ${Math.round(CFG.vbps/1000)}kbps...`);
+        }
+
+        // Hitung progress dari posisi waktu video
+        if (vid.duration > 0) {
+          const pct = Math.min(98, Math.round((vid.currentTime / vid.duration) * 100));
+          onProgress(pct);
+        }
+      }
+
+      S._raf = requestAnimationFrame(drawLoop);
+    };
+
+    // ── 9. Mulai putar video ───────────────────────────────
+    logMark(2, false, 'Menginisialisasi encoder & canvas...');
+    onStatus('Memulai playback...');
+
+    // Gambar frame hitam awal agar canvas tidak kosong
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, cW, cH);
+
+    try {
+      await vid.play();
+    } catch (e) {
+      cleanup();
+      reject(new Error('Tidak dapat memutar video: ' + e.message + '. Coba dari tombol di layar.'));
+      return;
+    }
+
+    S._raf = requestAnimationFrame(drawLoop);
+
+    // ── 10. Handler saat video selesai diputar ─────────────
+    vid.onended = () => {
+      cancelAnimationFrame(S._raf);
+      S._raf = null;
+      if (recorder.state === 'recording') {
+        logMark(3, true);
+        logMark(4, false, 'Memfinalisasi file MP4/WebM...');
+        onStatus('Menyimpan file...');
+        recorder.stop();
+      }
+    };
+
+    // Safety timeout: hentikan paksa jika video stuck
+    const safetySec = (vid.duration || 60) + 15;
+    setTimeout(() => {
+      if (recorder.state === 'recording') {
+        console.warn('Safety timeout reached, stopping recorder.');
+        cancelAnimationFrame(S._raf);
+        recorder.stop();
+      }
+    }, safetySec * 1000);
+
+    // ── Fungsi cleanup ──────────────────────────────────────
+    function cleanup() {
+      if (S._raf) { cancelAnimationFrame(S._raf); S._raf = null; }
+      try { if (vid.src) URL.revokeObjectURL(vid.src); } catch(e) {}
+      try { document.body.removeChild(vid); } catch(e) {}
+      try { if (S._audioCtx) { S._audioCtx.close(); S._audioCtx = null; } } catch(e) {}
+      S._vidEl = null;
+      S._recorder = null;
+    }
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+// BATALKAN
+// ──────────────────────────────────────────────────────────────
+function cancelCompress() {
+  S.cancelled = true;
+  stopCd();
+  if (S._raf)      { cancelAnimationFrame(S._raf); S._raf = null; }
+  if (S._recorder && S._recorder.state !== 'inactive') S._recorder.stop();
+  if (S._vidEl)    { try { S._vidEl.pause(); URL.revokeObjectURL(S._vidEl.src); document.body.removeChild(S._vidEl); } catch(e){} S._vidEl = null; }
+  if (S._audioCtx) { try { S._audioCtx.close(); } catch(e){} S._audioCtx = null; }
+  toast('Kompresi dibatalkan.', '');
+  go('upload');
+}
+
+// ──────────────────────────────────────────────────────────────
+// PROGRESS UI HELPERS
+// ──────────────────────────────────────────────────────────────
+function setRing(pct) {
+  // circumference = 2π×108 = 678.58
+  document.getElementById('ring').style.strokeDashoffset =
+    678.58 - (Math.min(100, pct) / 100) * 678.58;
+}
+
+function logMark(n, done, text) {
+  const el = document.getElementById('log' + n);
+  if (!el) return;
+  el.classList.remove('hidden');
+  el.style.display = 'flex';
+  const icon = document.getElementById('log' + n + 'i');
+  const txt  = document.getElementById('log' + n + 't');
+  if (done) {
+    el.classList.add('opacity-35');
+    if (icon) { icon.className = 'material-symbols-outlined text-green-400'; icon.style.fontSize='17px'; icon.textContent = 'check_circle'; }
+  } else {
+    el.classList.remove('opacity-35');
+    if (icon) { icon.className = 'material-symbols-outlined text-primary anim-spin'; icon.style.fontSize='17px'; icon.textContent = 'sync'; }
+    if (txt && text) txt.textContent = text;
+  }
+}
+
+function resetProgressUI() {
+  setRing(0);
+  document.getElementById('pct-text').textContent = '0%';
+  document.getElementById('status-text').textContent = 'Menyiapkan encoder...';
+  document.getElementById('time-text').textContent = 'Estimasi: menghitung...';
+  document.getElementById('comp-bar').style.width = '0%';
+  document.getElementById('fmt-badge').classList.add('hidden');
+  [3, 4].forEach(n => { const el = document.getElementById('log'+n); if(el) el.classList.add('hidden'); });
+  logMark(2, false, 'Menyiapkan canvas & encoder...');
+  document.getElementById('log1').classList.remove('opacity-0');
+  document.getElementById('log1').classList.add('opacity-35');
+}
+
+// ──────────────────────────────────────────────────────────────
+// COUNTDOWN
+// ──────────────────────────────────────────────────────────────
+function startCd(totalSec) {
+  stopCd();
+  let rem = Math.ceil(totalSec);
+  const upd = () => {
+    if (rem <= 0) { document.getElementById('time-text').textContent = 'Hampir selesai...'; stopCd(); return; }
+    const m = String(Math.floor(rem / 60)).padStart(2, '0');
+    const s = String(rem % 60).padStart(2, '0');
+    document.getElementById('time-text').textContent = `Estimasi sisa: ${m}:${s}`;
+    rem--;
+  };
+  upd();
+  S._cdTimer = setInterval(upd, 1000);
+}
+function stopCd() { if (S._cdTimer) { clearInterval(S._cdTimer); S._cdTimer = null; } }
+
+// ──────────────────────────────────────────────────────────────
+// LAYAR SUKSES — isi statistik nyata hasil kompresi
+// ──────────────────────────────────────────────────────────────
+function buildSuccess() {
+  document.getElementById('st-red').textContent  = '-' + S.out.redPct + '%';
+  document.getElementById('st-dur').innerHTML    =
+    fmtTime(S.meta.dur) + ' <span class="text-sm font-normal text-slate-400">(Full HD)</span>';
+  document.getElementById('st-size').textContent = S.out.sizeMB + ' MB';
+
+  // Tampilkan frame awal video asli sebagai thumbnail sukses
+  if (S.file && !S._prevUrl) S._prevUrl = URL.createObjectURL(S.file);
+  if (S._prevUrl) document.getElementById('succ-thumb').src = S._prevUrl;
+}
+
+// ──────────────────────────────────────────────────────────────
+// DOWNLOAD — unduh Blob video yang benar-benar terkompresi
+// ──────────────────────────────────────────────────────────────
+function dlFile() {
+  if (!S.out.blob) { toast('Tidak ada file untuk diunduh.', 'error'); return; }
+
+  // Tentukan ekstensi berdasarkan MIME type output MediaRecorder
+  const ext  = S.out.mime.includes('mp4') ? '.mp4' : '.webm';
+  const base = (S.meta.name || 'video').replace(/\.[^.]+$/, '');
+  const url  = URL.createObjectURL(S.out.blob);
+  const a    = document.createElement('a');
+
+  a.href     = url;
+  a.download = 'story_hd_' + base + ext; // contoh: story_hd_video_saya.mp4
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  // Bebaskan object URL setelah 6 detik (beri waktu browser mulai download)
+  setTimeout(() => URL.revokeObjectURL(url), 6000);
+
+  toast(`Mengunduh ${S.out.sizeMB} MB (${S.out.mime.includes('mp4') ? 'MP4' : 'WebM'})...`, 'success');
+}
+
+// ──────────────────────────────────────────────────────────────
+// KIRIM KE WHATSAPP
+// WhatsApp tidak mendukung attach file via URL deep-link di desktop.
+// Opsi terbaik: Web Share API (Chrome Android, Safari iOS) → bisa share file langsung.
+// Fallback: buka wa.me dengan teks informatif.
+// ──────────────────────────────────────────────────────────────
+async function sendWA() {
+  if (navigator.canShare && S.out.blob) {
+    const ext = S.out.mime.includes('mp4') ? '.mp4' : '.webm';
+    const f   = new File(
+      [S.out.blob],
+      'story_hd_' + (S.meta.name || 'video').replace(/\.[^.]+$/, '') + ext,
+      { type: S.out.mime }
+    );
+    if (navigator.canShare({ files: [f] })) {
+      try {
+        await navigator.share({ files: [f], title: 'WhatsApp Story HD' });
+        toast('Dibagikan lewat sistem!', 'success');
+        return;
+      } catch(e) { /* user cancel — lanjut fallback */ }
+    }
+  }
+  // Fallback: buka WhatsApp dengan teks
+  window.open(
+    'https://wa.me/?text=' + encodeURIComponent(
+      `📹 *Video Story HD Siap!*\n` +
+      `✅ Ukuran: ${S.out.sizeMB} MB (hemat ${S.out.redPct}%)\n` +
+      `🎬 Kualitas: ${S.quality} · ${S.out.mime.includes('mp4') ? 'H.264' : 'VP9'}\n` +
+      `💡 Unduh dulu, lalu kirim manual ke Story WhatsApp.`
+    ),
+    '_blank'
+  );
+  toast('Membuka WhatsApp... Unduh file terlebih dahulu.', 'info');
+}
+
+// ──────────────────────────────────────────────────────────────
+// KOMPRES LAIN — reset semua state
+// ──────────────────────────────────────────────────────────────
+function compressAnother() {
+  // Bebaskan Blob dari memori
+  S.out.blob = null;
+  if (S._prevUrl) { URL.revokeObjectURL(S._prevUrl); S._prevUrl = null; }
+
+  // Reset state
+  S.file      = null;
+  S.meta      = { name:'', sizeMB:0, dur:0, w:0, h:0 };
+  S.out       = { blob:null, mime:'', sizeMB:0, redPct:0 };
+  S.cancelled = false;
+
+  // Reset UI upload
+  document.getElementById('file-input').value = '';
+  document.getElementById('dz-h').textContent = 'Upload Video Story';
+  document.getElementById('dz-p').textContent = 'Tarik & lepas video di sini, atau klik untuk memilih';
+  document.getElementById('drop-zone').classList.remove('filled');
+  document.getElementById('meta-name').textContent = 'Pilih file video...';
+  document.getElementById('meta-size').textContent = '-- MB';
+  document.getElementById('meta-dur').textContent  = '--:--';
+  document.getElementById('meta-res').textContent  = '-- x --';
+  document.getElementById('prev-thumb').src =
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuC9QXVhQPlmlkfinfvWEA3ZA0_jpxHJlJwkEAMc_jtkA5LXSux7_C2dmrKDMzXxoPkylN2R-2UNq_EkMkOcM7v_ADgJjeKzfgQK1GUq07PTEWRuo2rjclNZrCB9QyquDtKAwgf7F9LS4y_wGGPatj9Irw9S5O892uosQB4FTXZftlcBAmROrmxa-fOdOESipqyY6VfgE6pA3Rl7IB5z477QXjZzyIKUF_WUTdrx4knYqS0Wt-DqPbYoRZ1zgxVfpw9sGZ1O_VmAM8k';
+
+  go('upload');
+}
+</script>
+</body>
+</html>
